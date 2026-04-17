@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+{% block title %}Parties{% endblock %}
+{% block content %}
+<h2>Party Management</h2>
+
+<section class="card">
+    <h3>Search</h3>
+    <form method="get" class="grid-form">
+        <label>Keyword <input name="q" value="{{ filters.q }}" placeholder="Name, email, phone"></label>
+        <label>Party Type
+            <select name="party_type">
+                <option value="">All</option>
+                {% for pt in party_types %}
+                    <option value="{{ pt.partyType }}" {% if filters.party_type == pt.partyType %}selected{% endif %}>{{ pt.partyType }}</option>
+                {% endfor %}
+            </select>
+        </label>
+        <button class="btn" type="submit">Search</button>
+    </form>
+</section>
+
+<div class="split">
+    <section class="card">
+        <h3>Create Party</h3>
+        <form method="post" class="grid-form">
+            <input type="hidden" name="action" value="create_party">
+            <label>Contact Person <input name="contactPersonName" required></label>
+            <label>Email <input name="email" type="email" required></label>
+            <label>Phone <input name="phone" required></label>
+            <label>Party Type
+                <select name="partyType" required>
+                    <option>Guest</option>
+                    <option>Organization</option>
+                </select>
+            </label>
+            <button class="btn" type="submit">Create</button>
+        </form>
+    </section>
+
+    <section class="card">
+        <h3>Add Group Member</h3>
+        <form method="post" class="grid-form">
+            <input type="hidden" name="action" value="add_guest">
+            <label>Party
+                <select name="partyId" required>
+                    {% for p in parties %}
+                        <option value="{{ p.partyId }}">{{ p.partyId }} - {{ p.contactPersonName }}</option>
+                    {% endfor %}
+                </select>
+            </label>
+            <label>Guest Name <input name="guestName" required></label>
+            <button class="btn" type="submit">Add Guest</button>
+        </form>
+    </section>
+</div>
+
+<section class="card">
+    <h3>Party List</h3>
+    <table>
+        <thead><tr><th>ID</th><th>Type</th><th>Contact</th><th>Email</th><th>Phone</th><th>Account</th><th>Account Status</th><th>Credit Limit</th></tr></thead>
+        <tbody>
+        {% for p in parties %}
+            <tr>
+                <td>{{ p.partyId }}</td><td>{{ p.partyType }}</td><td>{{ p.contactPersonName }}</td>
+                <td>{{ p.email }}</td><td>{{ p.phone }}</td><td>{{ p.accountId or "-" }}</td>
+                <td>{{ p.accountStatus or "-" }}</td><td>{{ p.creditLimit or "-" }}</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</section>
+
+<section class="card">
+    <h3>Guest Groups</h3>
+    <table>
+        <thead><tr><th>Party ID</th><th>Guest ID</th><th>Guest Name</th></tr></thead>
+        <tbody>
+        {% for g in guests %}
+            <tr><td>{{ g.partyId }}</td><td>{{ g.guestId }}</td><td>{{ g.guestName }}</td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</section>
+{% endblock %}

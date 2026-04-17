@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+{% block title %}Billing{% endblock %}
+{% block content %}
+<h2>Billing & Charges</h2>
+
+<div class="split">
+    <section class="card">
+        <h3>Create Billing Account</h3>
+        <form method="post" class="grid-form">
+            <input type="hidden" name="action" value="create_account">
+            <label>Party
+                <select name="partyId" required>
+                    {% for p in parties %}
+                        <option value="{{ p.partyId }}">{{ p.contactPersonName }}</option>
+                    {% endfor %}
+                </select>
+            </label>
+            <label>Status
+                <select name="status">
+                    <option>Open</option>
+                    <option>Closed</option>
+                    <option>On Hold</option>
+                </select>
+            </label>
+            <label>Credit Limit <input type="number" step="0.01" name="creditLimit"></label>
+            <button class="btn" type="submit">Create Account</button>
+        </form>
+    </section>
+
+    <section class="card">
+        <h3>Add Charge</h3>
+        <form method="post" class="grid-form">
+            <input type="hidden" name="action" value="add_charge">
+            <label>Account
+                <select name="accountId" required>
+                    {% for a in accounts %}
+                        <option value="{{ a.accountId }}">#{{ a.accountId }} - {{ a.contactPersonName }}</option>
+                    {% endfor %}
+                </select>
+            </label>
+            <label>Stay (optional)
+                <select name="stayId">
+                    <option value="">-- none --</option>
+                    {% for s in stays %}
+                        <option value="{{ s.stayId }}">Stay {{ s.stayId }} (Res {{ s.reservationId }})</option>
+                    {% endfor %}
+                </select>
+            </label>
+            <label>Service
+                <select name="serviceCode">
+                    {% for s in services %}
+                        <option value="{{ s.serviceCode }}">{{ s.serviceType }} (base {{ s.baseRate }})</option>
+                    {% endfor %}
+                </select>
+            </label>
+            <label>Amount <input name="chargeAmount" type="number" step="0.01" required></label>
+            <label>Date Incurred <input name="dateIncurred" type="date" value="{{ today }}" required></label>
+            <button class="btn" type="submit">Record Charge</button>
+        </form>
+    </section>
+</div>
+
+<section class="card">
+    <h3>Billing Accounts</h3>
+    <table>
+        <thead><tr><th>Account</th><th>Party</th><th>Type</th><th>Status</th><th>Credit Limit</th><th>Total Billed</th></tr></thead>
+        <tbody>
+        {% for a in accounts %}
+            <tr>
+                <td>{{ a.accountId }}</td><td>{{ a.contactPersonName }}</td><td>{{ a.partyType }}</td>
+                <td>{{ a.status }}</td><td>{{ a.creditLimit or "-" }}</td><td>{{ a.totalBilled }}</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</section>
+
+<section class="card">
+    <h3>Charges</h3>
+    <table>
+        <thead><tr><th>ID</th><th>Account</th><th>Stay</th><th>Service</th><th>Amount</th><th>Date</th></tr></thead>
+        <tbody>
+        {% for c in charges %}
+            <tr>
+                <td>{{ c.chargeId }}</td><td>{{ c.accountId }}</td><td>{{ c.stayId or "-" }}</td>
+                <td>{{ c.serviceType }}</td><td>{{ c.chargeAmount }}</td><td>{{ c.dateIncurred }}</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</section>
+{% endblock %}

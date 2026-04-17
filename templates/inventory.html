@@ -1,0 +1,168 @@
+{% extends "base.html" %}
+{% block title %}Inventory{% endblock %}
+{% block content %}
+<h2>Inventory</h2>
+
+<section class="card">
+    <h3>Rooms</h3>
+    <table>
+        <thead>
+        <tr>
+            <th>Room ID</th><th>Building</th><th>Wing</th><th>Floor</th><th>Room #</th>
+            <th>Rate</th><th>Capacity</th><th>Status</th><th>Non-Smoking</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for room in rooms %}
+            <tr>
+                <td>{{ room.roomId }}</td>
+                <td>{{ room.buildingName }}</td>
+                <td>{{ room.wingCode }}</td>
+                <td>{{ room.floorNumber }}</td>
+                <td>{{ room.roomNumber }}</td>
+                <td>{{ room.baseRate }}</td>
+                <td>{{ room.maxCapacity }}</td>
+                <td>{{ room.currentStatus }}</td>
+                <td>{{ "Yes" if room.nonSmokingFloor else "No" }}</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</section>
+
+<div class="split">
+    <section class="card">
+        <h3>Update Room Basics</h3>
+        <form method="post" class="grid-form">
+            <input type="hidden" name="action" value="update_room">
+            <label>Room
+                <select name="roomId" required>
+                    {% for room in rooms %}
+                        <option value="{{ room.roomId }}">{{ room.roomId }} - {{ room.roomNumber }}</option>
+                    {% endfor %}
+                </select>
+            </label>
+            <label>Base Rate <input type="number" step="0.01" name="baseRate" required></label>
+            <label>Max Capacity <input type="number" name="maxCapacity" required></label>
+            <label>Status
+                <select name="currentStatus" required>
+                    <option>Available</option>
+                    <option>Occupied</option>
+                    <option>Maintenance</option>
+                </select>
+            </label>
+            <button class="btn" type="submit">Update Room</button>
+        </form>
+    </section>
+
+    <section class="card">
+        <h3>Add Room Function</h3>
+        <form method="post" class="grid-form">
+            <input type="hidden" name="action" value="add_room_function">
+            <label>Room
+                <select name="roomId" required>
+                    {% for room in rooms %}
+                        <option value="{{ room.roomId }}">{{ room.roomId }} - {{ room.roomNumber }}</option>
+                    {% endfor %}
+                </select>
+            </label>
+            <label>Function
+                <select name="functionCode" required>
+                    {% for fn in functions %}
+                        <option value="{{ fn.functionCode }}">{{ fn.functionName }}</option>
+                    {% endfor %}
+                </select>
+            </label>
+            <label>Activeness <input name="activeness" value="Active"></label>
+            <button class="btn" type="submit">Add Function</button>
+        </form>
+    </section>
+</div>
+
+<div class="split">
+    <section class="card">
+        <h3>Add Bed Configuration</h3>
+        <form method="post" class="grid-form">
+            <input type="hidden" name="action" value="add_room_bed">
+            <label>Room
+                <select name="roomId" required>
+                    {% for room in rooms %}
+                        <option value="{{ room.roomId }}">{{ room.roomId }} - {{ room.roomNumber }}</option>
+                    {% endfor %}
+                </select>
+            </label>
+            <label>Bed Type
+                <select name="bedTypeId" required>
+                    {% for bt in bed_types %}
+                        <option value="{{ bt.bedTypeId }}">{{ bt.name }}</option>
+                    {% endfor %}
+                </select>
+            </label>
+            <label>Quantity <input type="number" name="quantity" value="1" min="0" required></label>
+            <label><input type="checkbox" name="isFoldable" value="1"> Foldable</label>
+            <button class="btn" type="submit">Add Bed Setup</button>
+        </form>
+    </section>
+
+    <section class="card">
+        <h3>Add Room Adjacency</h3>
+        <form method="post" class="grid-form">
+            <input type="hidden" name="action" value="add_adjacency">
+            <label>Room 1
+                <select name="roomId1" required>
+                    {% for room in rooms %}
+                        <option value="{{ room.roomId }}">{{ room.roomId }} - {{ room.roomNumber }}</option>
+                    {% endfor %}
+                </select>
+            </label>
+            <label>Room 2
+                <select name="roomId2" required>
+                    {% for room in rooms %}
+                        <option value="{{ room.roomId }}">{{ room.roomId }} - {{ room.roomNumber }}</option>
+                    {% endfor %}
+                </select>
+            </label>
+            <label>Connection Type <input name="connectionType" placeholder="Connecting Door" required></label>
+            <button class="btn" type="submit">Add Connection</button>
+        </form>
+    </section>
+</div>
+
+<div class="split">
+    <section class="card">
+        <h3>Room Functions</h3>
+        <table>
+            <thead><tr><th>Room</th><th>Code</th><th>Name</th><th>Status</th></tr></thead>
+            <tbody>
+            {% for rf in room_functions %}
+                <tr><td>{{ rf.roomId }}</td><td>{{ rf.functionCode }}</td><td>{{ rf.functionName }}</td><td>{{ rf.activeness }}</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </section>
+
+    <section class="card">
+        <h3>Bed Configurations</h3>
+        <table>
+            <thead><tr><th>Room</th><th>Type</th><th>Qty</th><th>Foldable</th></tr></thead>
+            <tbody>
+            {% for rb in room_beds %}
+                <tr><td>{{ rb.roomId }}</td><td>{{ rb.bedType }}</td><td>{{ rb.quantity }}</td><td>{{ "Yes" if rb.isFoldable else "No" }}</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </section>
+</div>
+
+<section class="card">
+    <h3>Adjacency</h3>
+    <table>
+        <thead><tr><th>Room 1</th><th>Room 2</th><th>Connection</th></tr></thead>
+        <tbody>
+        {% for link in adjacency %}
+            <tr><td>{{ link.roomId1 }}</td><td>{{ link.roomId2 }}</td><td>{{ link.connectionType }}</td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</section>
+{% endblock %}

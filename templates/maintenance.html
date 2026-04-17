@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% block title %}Maintenance{% endblock %}
+{% block content %}
+<h2>Maintenance Tickets</h2>
+
+<div class="split">
+    <section class="card">
+        <h3>Create Ticket</h3>
+        <form method="post" class="grid-form">
+            <input type="hidden" name="action" value="create_ticket">
+            <label>Room
+                <select name="roomId" required>
+                    {% for r in rooms %}
+                        <option value="{{ r.roomId }}">{{ r.roomId }} - {{ r.roomNumber }} ({{ r.currentStatus }})</option>
+                    {% endfor %}
+                </select>
+            </label>
+            <label>Issue Description <input name="issueDescription" required></label>
+            <label>Status
+                <select name="status">
+                    <option>Open</option>
+                    <option>In Progress</option>
+                    <option>Resolved</option>
+                </select>
+            </label>
+            <label>Date Created <input type="date" name="dateCreated" value="{{ today }}" required></label>
+            <button class="btn" type="submit">Create Ticket</button>
+        </form>
+    </section>
+
+    <section class="card">
+        <h3>Resolve Ticket</h3>
+        <form method="post" class="grid-form">
+            <input type="hidden" name="action" value="resolve_ticket">
+            <label>Ticket ID
+                <select name="ticketId">
+                    {% for t in tickets %}
+                        <option value="{{ t.ticketId }}">#{{ t.ticketId }} - Room {{ t.roomNumber }} ({{ t.status }})</option>
+                    {% endfor %}
+                </select>
+            </label>
+            <label>Date Resolved <input type="date" name="dateResolved" value="{{ today }}" required></label>
+            <button class="btn" type="submit">Resolve</button>
+        </form>
+    </section>
+</div>
+
+<section class="card">
+    <h3>Ticket List</h3>
+    <table>
+        <thead><tr><th>ID</th><th>Building</th><th>Wing</th><th>Room</th><th>Issue</th><th>Status</th><th>Created</th><th>Resolved</th></tr></thead>
+        <tbody>
+        {% for t in tickets %}
+            <tr>
+                <td>{{ t.ticketId }}</td><td>{{ t.buildingName }}</td><td>{{ t.wingCode }}</td><td>{{ t.roomNumber }}</td>
+                <td>{{ t.issueDescription }}</td><td>{{ t.status }}</td><td>{{ t.dateCreated }}</td><td>{{ t.dateResolved or "-" }}</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</section>
+{% endblock %}

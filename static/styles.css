@@ -1,0 +1,156 @@
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    color: #1b1b1b;
+    background: #f4f6f8;
+}
+
+.app-shell {
+    display: grid;
+    grid-template-columns: 240px 1fr;
+    min-height: 100vh;
+}
+
+.sidebar {
+    background: #1f2937;
+    color: #fff;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.sidebar h1 {
+    margin: 0 0 8px;
+    font-size: 22px;
+}
+
+.sidebar nav {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.sidebar a {
+    color: #dbeafe;
+    text-decoration: none;
+    padding: 8px 10px;
+    border-radius: 6px;
+}
+
+.sidebar a:hover {
+    background: #374151;
+}
+
+.content {
+    padding: 24px;
+}
+
+h2 {
+    margin-top: 0;
+}
+
+.card {
+    background: #fff;
+    border-radius: 8px;
+    padding: 16px;
+    margin-bottom: 16px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+    gap: 12px;
+}
+
+.kpi-grid .card h3 {
+    margin: 0 0 8px;
+    font-size: 14px;
+}
+
+.kpi-grid .card p {
+    margin: 0;
+    font-size: 20px;
+    font-weight: bold;
+}
+
+.split {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+    gap: 16px;
+}
+
+.grid-form {
+    display: grid;
+    gap: 10px;
+}
+
+label {
+    display: grid;
+    gap: 4px;
+    font-size: 14px;
+}
+
+input,
+select,
+button {
+    padding: 8px 10px;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    background: #fff;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+th,
+td {
+    border: 1px solid #e5e7eb;
+    padding: 8px;
+    font-size: 13px;
+    text-align: left;
+}
+
+th {
+    background: #f8fafc;
+}
+
+.btn {
+    background: #2563eb;
+    border: none;
+    color: #fff;
+    cursor: pointer;
+}
+
+.btn-secondary {
+    background: #0ea5e9;
+}
+
+.btn-danger {
+    background: #dc2626;
+}
+
+.flash-stack {
+    margin-bottom: 12px;
+}
+
+.flash {
+    margin-bottom: 8px;
+    padding: 10px;
+    border-radius: 6px;
+}
+
+.flash.success {
+    background: #dcfce7;
+}
+
+.flash.error {
+    background: #fee2e2;
+}

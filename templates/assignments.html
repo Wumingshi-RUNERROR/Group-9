@@ -1,0 +1,99 @@
+{% extends "base.html" %}
+{% block title %}Assignments & Stay{% endblock %}
+{% block content %}
+<h2>Assignments & Stay</h2>
+
+<div class="split">
+    <section class="card">
+        <h3>Assign Room</h3>
+        <form method="post" class="grid-form">
+            <input type="hidden" name="action" value="assign_room">
+            <label>Reservation
+                <select name="reservationId" required>
+                    {% for r in reservations %}
+                        <option value="{{ r.reservationId }}">{{ r.reservationId }} - {{ r.contactPersonName }} ({{ r.startDate }} to {{ r.endDate }})</option>
+                    {% endfor %}
+                </select>
+            </label>
+            <label>Room
+                <select name="roomId" required>
+                    {% for room in rooms %}
+                        <option value="{{ room.roomId }}">{{ room.roomId }} - {{ room.roomNumber }} ({{ room.currentStatus }})</option>
+                    {% endfor %}
+                </select>
+            </label>
+            <label>Assignment Date <input type="date" name="assignmentDate" required></label>
+            <button class="btn" type="submit">Assign</button>
+        </form>
+    </section>
+
+    <section class="card">
+        <h3>Check-In</h3>
+        <form method="post" class="grid-form">
+            <input type="hidden" name="action" value="checkin">
+            <label>Reservation
+                <select name="reservationId" required>
+                    {% for r in reservations %}
+                        <option value="{{ r.reservationId }}">{{ r.reservationId }} - {{ r.contactPersonName }}</option>
+                    {% endfor %}
+                </select>
+            </label>
+            <label>Check-In Time <input type="text" name="checkinTime" value="{{ now }}" required></label>
+            <button class="btn" type="submit">Check In</button>
+        </form>
+    </section>
+
+    <section class="card">
+        <h3>Check-Out</h3>
+        <form method="post" class="grid-form">
+            <input type="hidden" name="action" value="checkout">
+            <label>Stay
+                <select name="stayId" required>
+                    {% for s in stays %}
+                        <option value="{{ s.stayId }}">{{ s.stayId }} - {{ s.contactPersonName }} {% if s.checkoutTime %}(closed){% else %}(open){% endif %}</option>
+                    {% endfor %}
+                </select>
+            </label>
+            <label>Check-Out Time <input type="text" name="checkoutTime" value="{{ now }}" required></label>
+            <button class="btn" type="submit">Check Out</button>
+        </form>
+    </section>
+</div>
+
+<section class="card">
+    <h3>Assignments</h3>
+    <table>
+        <thead><tr><th>ID</th><th>Reservation</th><th>Party</th><th>Room</th><th>Status</th><th>Date</th></tr></thead>
+        <tbody>
+        {% for a in assignments %}
+            <tr>
+                <td>{{ a.assignmentId }}</td>
+                <td>{{ a.reservationId }}</td>
+                <td>{{ a.contactPersonName }}</td>
+                <td>{{ a.roomId }} / {{ a.roomNumber }}</td>
+                <td>{{ a.currentStatus }}</td>
+                <td>{{ a.assignmentDate }}</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</section>
+
+<section class="card">
+    <h3>Stays</h3>
+    <table>
+        <thead><tr><th>Stay ID</th><th>Reservation</th><th>Party</th><th>Check-In</th><th>Check-Out</th></tr></thead>
+        <tbody>
+        {% for s in stays %}
+            <tr>
+                <td>{{ s.stayId }}</td>
+                <td>{{ s.reservationId }}</td>
+                <td>{{ s.contactPersonName }}</td>
+                <td>{{ s.checkinTime }}</td>
+                <td>{{ s.checkoutTime or "-" }}</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</section>
+{% endblock %}

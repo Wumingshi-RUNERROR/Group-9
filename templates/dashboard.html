@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block title %}Dashboard{% endblock %}
+{% block content %}
+<h2>Dashboard</h2>
+
+<form method="get" class="grid-form">
+    <label>Date From <input type="date" name="date_from" value="{{ filters.date_from }}"></label>
+    <label>Date To <input type="date" name="date_to" value="{{ filters.date_to }}"></label>
+    <label>Building
+        <select name="building_id">
+            <option value="">All</option>
+            {% for b in buildings %}
+                <option value="{{ b.buildingId }}" {% if filters.building_id == b.buildingId|string %}selected{% endif %}>{{ b.buildingName }}</option>
+            {% endfor %}
+        </select>
+    </label>
+    <label>Wing
+        <select name="wing_id">
+            <option value="">All</option>
+            {% for w in wings %}
+                <option value="{{ w.wingId }}" {% if filters.wing_id == w.wingId|string %}selected{% endif %}>{{ w.wingCode }}</option>
+            {% endfor %}
+        </select>
+    </label>
+    <label>Party Type
+        <select name="party_type">
+            <option value="">All</option>
+            {% for p in party_types %}
+                <option value="{{ p.partyType }}" {% if filters.party_type == p.partyType %}selected{% endif %}>{{ p.partyType }}</option>
+            {% endfor %}
+        </select>
+    </label>
+    <button type="submit" class="btn">Apply</button>
+</form>
+
+<section class="kpi-grid">
+    <article class="card"><h3>Total Revenue</h3><p>${{ '%.2f'|format(revenue) }}</p></article>
+    <article class="card"><h3>Active Assignments</h3><p>{{ active_assignments }}</p></article>
+    <article class="card"><h3>Total Events</h3><p>{{ total_events }}</p></article>
+    <article class="card"><h3>Avg Stay (days)</h3><p>{{ avg_stay_days }}</p></article>
+    <article class="card"><h3>Open Tickets</h3><p>{{ open_tickets }}</p></article>
+</section>
+
+<section class="card">
+    <h3>Occupied vs Available/Other by Building</h3>
+    <table>
+        <thead><tr><th>Building</th><th>Occupied</th><th>Available/Other</th></tr></thead>
+        <tbody>
+        {% for row in occupancy %}
+            <tr>
+                <td>{{ row.buildingName }}</td>
+                <td>{{ row.occupied }}</td>
+                <td>{{ row.available_or_other }}</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</section>
+{% endblock %}

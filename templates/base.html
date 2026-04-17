@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}Last Resort Admin{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+<div class="app-shell">
+    <aside class="sidebar">
+        <h1>Last Resort</h1>
+        <nav>
+            <a href="{{ url_for('dashboard') }}">Dashboard</a>
+            <a href="{{ url_for('inventory') }}">Inventory</a>
+            <a href="{{ url_for('parties') }}">Parties</a>
+            <a href="{{ url_for('reservations') }}">Reservations</a>
+            <a href="{{ url_for('assignments') }}">Assignments & Stay</a>
+            <a href="{{ url_for('events') }}">Events</a>
+            <a href="{{ url_for('billing') }}">Billing</a>
+            <a href="{{ url_for('maintenance') }}">Maintenance</a>
+        </nav>
+        <a class="btn btn-secondary" href="{{ url_for('init_db_route') }}">Init DB (safe)</a>
+        <a class="btn btn-danger" href="{{ url_for('init_db_route', force=1) }}">Reset + Seed DB</a>
+    </aside>
+    <main class="content">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="flash-stack">
+                    {% for category, message in messages %}
+                        <div class="flash {{ category }}">{{ message }}</div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+        {% block content %}{% endblock %}
+    </main>
+</div>
+</body>
+</html>

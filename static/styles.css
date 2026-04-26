@@ -154,3 +154,21 @@ th {
 .flash.error {
     background: #fee2e2;
 }
+
+/* 新增：视图切换按钮的容器样式 */
+.view-toggle {
+    margin-bottom: 20px;
+    display: flex;
+    gap: 10px;
+}
+
+.view-toggle .btn {
+    opacity: 0.8;
+    transition: opacity 0.2s, font-weight 0.2s;
+}
+
+/* 当按钮被激活时改变透明度和粗细 */
+.view-toggle .btn:active, 
+.view-toggle .btn:focus {
+    opacity: 1;
+}

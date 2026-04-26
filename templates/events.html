@@ -16,61 +16,75 @@
                 </select>
             </label>
             <label>Event Type <input name="eventType" placeholder="Conference" required></label>
-            <label>Start Time <input name="startTime" placeholder="YYYY-MM-DD HH:MM:SS" required></label>
-            <label>End Time <input name="endTime" placeholder="YYYY-MM-DD HH:MM:SS" required></label>
+            
+            <label>Start Time <input type="datetime-local" name="startTime" required></label>
+            <label>End Time <input type="datetime-local" name="endTime" required></label>
+            
             <label>Estimated Guests <input name="estimatedGuestCount" type="number" min="0"></label>
             <label>Usage Time <input name="usageTime" placeholder="Morning / Evening"></label>
             <button class="btn" type="submit">Create Event</button>
         </form>
     </section>
 
-    <section class="card">
-        <h3>Assign Room to Event</h3>
+    <section class="card" style="border-top: 4px solid #f59e0b;">
+        <h3>Assign / Re-assign Room</h3>
         <form method="post" class="grid-form">
             <input type="hidden" name="action" value="add_event_room">
-            <label>Event
+            <label>Select Event
                 <select name="eventId" required>
                     {% for e in events %}
-                        <option value="{{ e.eventId }}">{{ e.eventId }} - {{ e.eventType }}</option>
+                        <option value="{{ e.eventId }}">Event #{{ e.eventId }} - {{ e.eventType }}</option>
                     {% endfor %}
                 </select>
             </label>
-            <label>Room
+            <label>Select Available Room
                 <select name="roomId" required>
+                    <option value="" disabled selected>-- Available Rooms Only --</option>
                     {% for r in rooms %}
-                        <option value="{{ r.roomId }}">{{ r.roomId }} - {{ r.roomNumber }}</option>
+                        <option value="{{ r.roomId }}">Room {{ r.roomNumber }}</option>
                     {% endfor %}
                 </select>
             </label>
-            <button class="btn" type="submit">Assign Room</button>
+            <button class="btn" type="submit" style="background-color: #f59e0b;">Assign / Update Room</button>
+            <small style="color: #666; margin-top: 5px;">* Note: An event can only have one room. Re-assigning will overwrite the current room.</small>
         </form>
     </section>
 </div>
 
 <section class="card">
-    <h3>Events</h3>
+    <h3>Events Overview</h3>
     <table>
-        <thead><tr><th>ID</th><th>Type</th><th>Host</th><th>Start</th><th>End</th><th>Estimated Guests</th><th>Usage Time</th></tr></thead>
+        <thead>
+            <tr>
+                <th>ID</th><th>Type</th><th>Host</th><th>Start</th><th>End</th><th>Guests</th><th>Usage Time</th><th>Assigned Room</th>
+            </tr>
+        </thead>
         <tbody>
         {% for e in events %}
             <tr>
-                <td>{{ e.eventId }}</td><td>{{ e.eventType }}</td><td>{{ e.contactPersonName }}</td>
-                <td>{{ e.startTime }}</td><td>{{ e.endTime }}</td><td>{{ e.estimatedGuestCount or "-" }}</td><td>{{ e.usageTime or "-" }}</td>
+                <td>{{ e.eventId }}</td>
+                <td>{{ e.eventType }}</td>
+                <td>{{ e.contactPersonName }}</td>
+                <td>{{ e.startTime|replace('T', ' ') }}</td>
+                <td>{{ e.endTime|replace('T', ' ') }}</td>
+                <td>{{ e.estimatedGuestCount or "-" }}</td>
+                <td>{{ e.usageTime or "-" }}</td>
+                <td>
+                    {% set ns = namespace(found=false) %}
+                    {% for er in event_rooms %}
+                        {% if er.eventId == e.eventId %}
+                            <span style="color: #10b981; font-weight: bold;">Room {{ er.roomNumber }}</span>
+                            {% set ns.found = true %}
+                        {% endif %}
+                    {% endfor %}
+                    {% if not ns.found %}
+                        <span style="color: #ef4444; font-size: 0.9em;">Not Assigned</span>
+                    {% endif %}
+                </td>
             </tr>
         {% endfor %}
         </tbody>
     </table>
 </section>
 
-<section class="card">
-    <h3>Event Room Mapping</h3>
-    <table>
-        <thead><tr><th>Event ID</th><th>Room ID</th><th>Room #</th></tr></thead>
-        <tbody>
-        {% for er in event_rooms %}
-            <tr><td>{{ er.eventId }}</td><td>{{ er.roomId }}</td><td>{{ er.roomNumber }}</td></tr>
-        {% endfor %}
-        </tbody>
-    </table>
-</section>
 {% endblock %}

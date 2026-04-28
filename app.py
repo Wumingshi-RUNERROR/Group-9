@@ -893,4 +893,5 @@ app = create_app()
 
 if __name__ == "__main__":
     init_db()
+    print("\n  Last Resort: open http://127.0.0.1:5000/  (Flask uses port 5000, not 80)\n")
     app.run(debug=True)

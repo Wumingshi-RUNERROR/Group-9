@@ -1,19 +1,20 @@
 PRAGMA foreign_keys = ON;
+-- INSERT OR IGNORE: safe to re-run when last_resort.db already has seed rows (avoids UNIQUE/PK errors).
 
-INSERT INTO hotel (hotelId, hotelName) VALUES
+INSERT OR IGNORE INTO hotel (hotelId, hotelName) VALUES
 (1, 'Last Resort Hotel');
 
-INSERT INTO building (buildingId, hotelId, buildingName) VALUES
+INSERT OR IGNORE INTO building (buildingId, hotelId, buildingName) VALUES
 (1, 1, 'Ocean Tower'),
 (2, 1, 'Garden Lodge');
 
-INSERT INTO wing (wingId, buildingId, wingCode, nearPool, nearParking, handicapAccess) VALUES
+INSERT OR IGNORE INTO wing (wingId, buildingId, wingCode, nearPool, nearParking, handicapAccess) VALUES
 (1, 1, 'A', 1, 1, 1),
 (2, 1, 'B', 0, 1, 1),
 (3, 2, 'C', 1, 0, 1),
 (4, 2, 'D', 0, 1, 0);
 
-INSERT INTO floor (floorId, wingId, floorNumber, nonSmokingFloor) VALUES
+INSERT OR IGNORE INTO floor (floorId, wingId, floorNumber, nonSmokingFloor) VALUES
 (1, 1, 1, 1),
 (2, 1, 2, 1),
 (3, 2, 1, 0),
@@ -21,7 +22,7 @@ INSERT INTO floor (floorId, wingId, floorNumber, nonSmokingFloor) VALUES
 (5, 3, 1, 1),
 (6, 4, 1, 0);
 
-INSERT INTO room (roomId, floorId, roomNumber, baseRate, maxCapacity, currentStatus) VALUES
+INSERT OR IGNORE INTO room (roomId, floorId, roomNumber, baseRate, maxCapacity, currentStatus) VALUES
 (1, 1, '101', 180.00, 2, 'Available'),
 (2, 1, '102', 220.00, 4, 'Occupied'),
 (3, 2, '201', 250.00, 3, 'Available'),
@@ -33,12 +34,12 @@ INSERT INTO room (roomId, floorId, roomNumber, baseRate, maxCapacity, currentSta
 (9, 6, '101', 400.00, 10, 'Available'),
 (10, 6, '102', 450.00, 12, 'Available');
 
-INSERT INTO function (functionCode, functionName) VALUES
+INSERT OR IGNORE INTO function (functionCode, functionName) VALUES
 ('SLP', 'Sleeping Room'),
 ('MTG', 'Meeting Room'),
 ('STE', 'Suite');
 
-INSERT INTO room_function (roomId, functionCode, activeness) VALUES
+INSERT OR IGNORE INTO room_function (roomId, functionCode, activeness) VALUES
 (1, 'SLP', 'Active'),
 (2, 'SLP', 'Active'),
 (3, 'SLP', 'Active'),
@@ -51,13 +52,13 @@ INSERT INTO room_function (roomId, functionCode, activeness) VALUES
 (9, 'MTG', 'Active'),
 (10, 'MTG', 'Active');
 
-INSERT INTO bed_type (bedTypeId, name, capacity) VALUES
+INSERT OR IGNORE INTO bed_type (bedTypeId, name, capacity) VALUES
 (1, 'Queen', 2),
 (2, 'King', 2),
 (3, 'Twin', 1),
 (4, 'Sofa Bed', 1);
 
-INSERT INTO room_has_bed (roomId, bedTypeId, quantity, isFoldable) VALUES
+INSERT OR IGNORE INTO room_has_bed (roomId, bedTypeId, quantity, isFoldable) VALUES
 (1, 1, 1, 0),
 (2, 1, 2, 0),
 (3, 2, 1, 0),
@@ -67,13 +68,13 @@ INSERT INTO room_has_bed (roomId, bedTypeId, quantity, isFoldable) VALUES
 (8, 2, 1, 0),
 (8, 4, 1, 1);
 
-INSERT INTO room_adjacency (roomId1, roomId2, connectionType) VALUES
+INSERT OR IGNORE INTO room_adjacency (roomId1, roomId2, connectionType) VALUES
 (1, 2, 'Connecting Door'),
 (2, 3, 'Adjacent'),
 (4, 5, 'Movable Wall'),
 (9, 10, 'Partition');
 
-INSERT INTO party (partyId, email, phone, partyType, contactPersonName) VALUES
+INSERT OR IGNORE INTO party (partyId, email, phone, partyType, contactPersonName) VALUES
 (1, 'alice@example.com', '555-1001', 'Guest', 'Alice Chen'),
 (2, 'bob@example.com', '555-1002', 'Guest', 'Bob Li'),
 (3, 'carol@acme.com', '555-2001', 'Organization', 'Carol Wong'),
@@ -81,7 +82,7 @@ INSERT INTO party (partyId, email, phone, partyType, contactPersonName) VALUES
 (5, 'eva@example.com', '555-1003', 'Guest', 'Eva Zhang'),
 (6, 'frank@eventco.com', '555-3001', 'Organization', 'Frank Brown');
 
-INSERT INTO guest_group (partyId, guestId, guestName) VALUES
+INSERT OR IGNORE INTO guest_group (partyId, guestId, guestName) VALUES
 (1, 1, 'Alice Chen'),
 (2, 1, 'Bob Li'),
 (3, 1, 'Carol Wong'),
@@ -93,7 +94,7 @@ INSERT INTO guest_group (partyId, guestId, guestName) VALUES
 (6, 2, 'Mia Brown'),
 (6, 3, 'Lucas Brown');
 
-INSERT INTO billing_account (accountId, partyId, status, creditLimit) VALUES
+INSERT OR IGNORE INTO billing_account (accountId, partyId, status, creditLimit) VALUES
 (1, 1, 'Open', 1000.00),
 (2, 2, 'Open', 1500.00),
 (3, 3, 'Open', 5000.00),
@@ -101,7 +102,7 @@ INSERT INTO billing_account (accountId, partyId, status, creditLimit) VALUES
 (5, 5, 'Closed', 800.00),
 (6, 6, 'Open', 9000.00);
 
-INSERT INTO reservation (reservationId, partyId, dateCreated, startDate, endDate, status, depositRequired, depositAmount) VALUES
+INSERT OR IGNORE INTO reservation (reservationId, partyId, dateCreated, startDate, endDate, status, depositRequired, depositAmount) VALUES
 (1, 1, '2026-01-02', '2026-01-10', '2026-01-13', 'Confirmed', 0, 0.00),
 (2, 2, '2026-01-05', '2026-02-01', '2026-02-04', 'Confirmed', 1, 100.00),
 (3, 3, '2025-11-15', '2026-01-20', '2026-01-23', 'Confirmed', 1, 500.00),
@@ -111,7 +112,7 @@ INSERT INTO reservation (reservationId, partyId, dateCreated, startDate, endDate
 (7, 3, '2026-03-01', '2026-03-20', '2026-03-22', 'Confirmed', 0, 0.00),
 (8, 1, '2026-03-18', '2026-03-25', '2026-03-27', 'Confirmed', 0, 0.00);
 
-INSERT INTO room_assignment (assignmentId, reservationId, roomId, assignmentDate) VALUES
+INSERT OR IGNORE INTO room_assignment (assignmentId, reservationId, roomId, assignmentDate) VALUES
 (1, 1, 1, '2026-01-09'),
 (2, 2, 2, '2026-01-31'),
 (3, 3, 4, '2026-01-18'),
@@ -123,7 +124,7 @@ INSERT INTO room_assignment (assignmentId, reservationId, roomId, assignmentDate
 (9, 4, 8, '2026-02-09'),
 (10, 6, 10, '2026-03-13');
 
-INSERT INTO stay (stayId, reservationId, checkinTime, checkoutTime) VALUES
+INSERT OR IGNORE INTO stay (stayId, reservationId, checkinTime, checkoutTime) VALUES
 (1, 1, '2026-01-10 16:00:00', '2026-01-13 10:00:00'),
 (2, 2, '2026-02-01 16:00:00', '2026-02-04 11:00:00'),
 (3, 3, '2026-01-20 08:00:00', '2026-01-23 18:00:00'),
@@ -133,13 +134,13 @@ INSERT INTO stay (stayId, reservationId, checkinTime, checkoutTime) VALUES
 (7, 8, '2026-03-25 16:00:00', '2026-03-27 10:00:00'),
 (8, 7, '2026-03-20 15:00:00', '2026-03-22 12:00:00');
 
-INSERT INTO event (eventId, hostPartyId, eventType, startTime, endTime, estimatedGuestCount, usageTime) VALUES
+INSERT OR IGNORE INTO event (eventId, hostPartyId, eventType, startTime, endTime, estimatedGuestCount, usageTime) VALUES
 (1, 3, 'Conference', '2026-01-20 09:00:00', '2026-01-22 18:00:00', 120, 'Morning'),
 (2, 4, 'Wedding', '2026-02-11 14:00:00', '2026-02-11 22:00:00', 200, 'Evening'),
 (3, 6, 'Seminar', '2026-03-16 08:00:00', '2026-03-17 17:00:00', 80, 'Afternoon'),
 (4, 3, 'Banquet', '2026-03-21 18:00:00', '2026-03-21 23:00:00', 150, 'Supper');
 
-INSERT INTO event_room (eventId, roomId) VALUES
+INSERT OR IGNORE INTO event_room (eventId, roomId) VALUES
 (1, 4),
 (1, 5),
 (2, 9),
@@ -147,7 +148,7 @@ INSERT INTO event_room (eventId, roomId) VALUES
 (3, 9),
 (4, 10);
 
-INSERT INTO service_type (serviceCode, serviceType, baseRate) VALUES
+INSERT OR IGNORE INTO service_type (serviceCode, serviceType, baseRate) VALUES
 (1, 'Sleeping Room', 200.00),
 (2, 'Meeting Room Rental', 500.00),
 (3, 'Restaurant', 80.00),
@@ -155,7 +156,7 @@ INSERT INTO service_type (serviceCode, serviceType, baseRate) VALUES
 (5, 'Laundry', 20.00),
 (6, 'Spa', 120.00);
 
-INSERT INTO charge (chargeId, accountId, stayId, serviceCode, chargeAmount, dateIncurred) VALUES
+INSERT OR IGNORE INTO charge (chargeId, accountId, stayId, serviceCode, chargeAmount, dateIncurred) VALUES
 (1, 1, 1, 1, 540.00, '2026-01-10'),
 (2, 1, 1, 3, 95.00, '2026-01-11'),
 (3, 1, 1, 5, 25.00, '2026-01-12'),
@@ -186,7 +187,7 @@ INSERT INTO charge (chargeId, accountId, stayId, serviceCode, chargeAmount, date
 (21, 1, 7, 1, 500.00, '2026-03-25'),
 (22, 1, 7, 5, 20.00, '2026-03-26');
 
-INSERT INTO maintenance_ticket (ticketId, roomId, issueDescription, status, dateCreated, dateResolved) VALUES
+INSERT OR IGNORE INTO maintenance_ticket (ticketId, roomId, issueDescription, status, dateCreated, dateResolved) VALUES
 (1, 5, 'Projector malfunction', 'Resolved', '2026-01-10', '2026-01-12'),
 (2, 2, 'Air conditioning issue', 'Resolved', '2026-02-01', '2026-02-03'),
 (3, 8, 'Bathroom leak', 'Resolved', '2026-02-14', '2026-02-18'),

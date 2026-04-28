@@ -11,17 +11,16 @@
     <aside class="sidebar">
         <h1>Last Resort</h1>
         <nav>
-            <a href="{{ url_for('dashboard') }}">Dashboard</a>
-            <a href="{{ url_for('inventory') }}">Inventory</a>
-            <a href="{{ url_for('parties') }}">Parties</a>
-            <a href="{{ url_for('reservations') }}">Reservations</a>
-            <a href="{{ url_for('assignments') }}">Assignments & Stay</a>
-            <a href="{{ url_for('events') }}">Events</a>
-            <a href="{{ url_for('billing') }}">Billing</a>
-            <a href="{{ url_for('maintenance') }}">Maintenance</a>
+            {% set ep = request.endpoint %}
+            <a href="{{ url_for('dashboard') }}"{% if ep == 'dashboard' %} class="active"{% endif %}>Dashboard</a>
+            <a href="{{ url_for('inventory') }}"{% if ep == 'inventory' %} class="active"{% endif %}>Inventory</a>
+            <a href="{{ url_for('parties') }}"{% if ep == 'parties' %} class="active"{% endif %}>Parties</a>
+            <a href="{{ url_for('reservations') }}"{% if ep == 'reservations' %} class="active"{% endif %}>Reservations</a>
+            <a href="{{ url_for('assignments') }}"{% if ep == 'assignments' %} class="active"{% endif %}>Assignments & Stay</a>
+            <a href="{{ url_for('events') }}"{% if ep == 'events' %} class="active"{% endif %}>Events</a>
+            <a href="{{ url_for('billing') }}"{% if ep == 'billing' %} class="active"{% endif %}>Billing</a>
+            <a href="{{ url_for('maintenance') }}"{% if ep == 'maintenance' %} class="active"{% endif %}>Maintenance</a>
         </nav>
-        <a class="btn btn-secondary" href="{{ url_for('init_db_route') }}">Init DB (safe)</a>
-        <a class="btn btn-danger" href="{{ url_for('init_db_route', force=1) }}">Reset + Seed DB</a>
     </aside>
     <main class="content">
         {% with messages = get_flashed_messages(with_categories=true) %}

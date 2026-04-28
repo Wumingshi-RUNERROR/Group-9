@@ -3,9 +3,19 @@
 {% block content %}
 <h2>Reservation Management</h2>
 
-<div class="view-toggle">
-    <a href="{{ url_for('reservations', view='view') }}" class="btn {% if view == 'view' %}active{% endif %}">View & Update Reservations</a>
-    <a href="{{ url_for('reservations', view='create', step='party') }}" class="btn {% if view == 'create' %}active{% endif %}">Create New Booking</a>
+<div class="res-mode-switch" role="tablist" aria-label="Reservation tools">
+    <a href="{{ url_for('reservations', view='view') }}"
+       class="res-mode-switch__opt{% if view == 'view' %} is-on{% endif %}"
+       role="tab"{% if view == 'view' %} aria-selected="true"{% else %} aria-selected="false"{% endif %}>
+        <span class="res-mode-switch__label">View &amp; update</span>
+        <span class="res-mode-switch__hint">Search and change status</span>
+    </a>
+    <a href="{{ url_for('reservations', view='create', step='party') }}"
+       class="res-mode-switch__opt{% if view == 'create' %} is-on{% endif %}"
+       role="tab"{% if view == 'create' %} aria-selected="true"{% else %} aria-selected="false"{% endif %}>
+        <span class="res-mode-switch__label">New booking</span>
+        <span class="res-mode-switch__hint">Party, guests, dates</span>
+    </a>
 </div>
 
 {% if view == 'view' %}
@@ -150,8 +160,6 @@ document.addEventListener("DOMContentLoaded", function() {
 </script>
 
 <style>
-    .view-toggle { margin-bottom: 20px; }
-    .active { background: #2563eb !important; color: white !important; font-weight: bold; }
     .sub-card h4 { margin-top: 0; color: #666; }
     .status-tag { background: #eee; padding: 2px 6px; border-radius: 4px; font-size: 0.85em; }
     table { width: 100%; border-collapse: collapse; }

@@ -22,17 +22,17 @@
                 <td>{{ r.contactPersonName }}</td>
                 <td>{{ r.startDate }} to {{ r.endDate }}</td>
                 <td>
-                    {% if r.roomNumber %}
-                        Room {{ r.roomNumber }}
+                    {% if r.roomLabel %}
+                        <strong>{{ r.roomLabel }}</strong>
                     {% else %}
                         <span style="color: #ef4444; font-size: 0.9em;">Not Assigned</span>
                     {% endif %}
                 </td>
                 <td>
-                    {% if not r.roomNumber %}
+                    {% if not r.roomLabel %}
                         <a href="{{ url_for('assignments', assign_res_id=r.reservationId, assign_res_name=r.contactPersonName) }}" class="btn" style="background-color: #f59e0b;">Assign Room</a>
-                    
-                    {% elif r.roomNumber and not r.checkinTime %}
+
+                    {% elif r.roomLabel and not r.checkinTime %}
                         <div style="display: flex; gap: 5px;">
                             <form method="post" style="margin: 0;">
                                 <input type="hidden" name="action" value="checkin">
@@ -63,7 +63,7 @@
             <select name="roomId" required>
                 <option value="" disabled selected>-- Choose a room --</option>
                 {% for room in rooms %}
-                    <option value="{{ room.roomId }}">Room {{ room.roomNumber }}</option>
+                    <option value="{{ room.roomId }}">{{ room.roomLabel }}</option>
                 {% endfor %}
             </select>
         </label>
@@ -86,7 +86,7 @@
                 <tr>
                     <td>{{ a.reservationId }}</td>
                     <td>{{ a.contactPersonName }}</td>
-                    <td>{{ a.roomNumber }}</td>
+                    <td>{{ a.roomLabel }}</td>
                     <td>{{ a.assignmentDate }}</td>
                 </tr>
             {% endfor %}

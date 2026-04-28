@@ -107,108 +107,176 @@ def register_routes(app: Flask) -> None:
     @app.route("/dashboard")
     def dashboard():
         db = get_db()
-        date_from = request.args.get("date_from", "")
-        date_to = request.args.get("date_to", "")
+        date_from   = request.args.get("date_from",   "")
+        date_to     = request.args.get("date_to",     "")
         building_id = request.args.get("building_id", "")
-        wing_id = request.args.get("wing_id", "")
-        party_type = request.args.get("party_type", "")
+        wing_code   = request.args.get("wing_code",   "")
+        party_type  = request.args.get("party_type",  "")
 
-        where_clauses = []
-        params: list[Any] = []
+        # Reusable EXISTS snippet – filters a reservation's rooms by building/wing.
+        # Always included (with empty-string guards) so all KPIs use the same counting path,
+        # guaranteeing Wing A + Wing B == Total when no other filter differs.
+        _room_scope_sql = """
+            EXISTS (
+                SELECT 1 FROM room_assignment _ra
+                JOIN room     _rm ON _rm.roomId    = _ra.roomId
+                JOIN floor    _fl ON _fl.floorId   = _rm.floorId
+                JOIN wing     _w  ON _w.wingId     = _fl.wingId
+                JOIN building _b  ON _b.buildingId = _w.buildingId
+                WHERE _ra.reservationId = r.reservationId
+                  AND (? = '' OR _b.buildingId = ?)
+                  AND (? = '' OR _w.wingCode   = ?)
+            )"""
+        _rs_params = [building_id, building_id, wing_code, wing_code]
+
+        # ── Total Revenue ──────────────────────────────────────────────────────
+        rev_f: list[str] = [_room_scope_sql]
+        rev_p: list[Any] = list(_rs_params)
         if date_from:
-            where_clauses.append("c.dateIncurred >= ?")
-            params.append(date_from)
+            rev_f.append("c.dateIncurred >= ?"); rev_p.append(date_from)
         if date_to:
-            where_clauses.append("c.dateIncurred <= ?")
-            params.append(date_to)
-        charge_where = f"WHERE {' AND '.join(where_clauses)}" if where_clauses else ""
+            rev_f.append("c.dateIncurred <= ?"); rev_p.append(date_to)
+        if party_type:
+            rev_f.append("p.partyType = ?"); rev_p.append(party_type)
 
         revenue = db.execute(
-            f"SELECT COALESCE(SUM(c.chargeAmount), 0) AS total_revenue FROM charge c {charge_where}",
-            params,
+            f"""
+            SELECT COALESCE(SUM(c.chargeAmount), 0) AS total_revenue
+            FROM charge c
+            JOIN stay s        ON s.stayId        = c.stayId
+            JOIN reservation r ON r.reservationId = s.reservationId
+            JOIN party p       ON p.partyId       = r.partyId
+            WHERE {' AND '.join(rev_f)}
+            """,
+            rev_p,
         ).fetchone()["total_revenue"]
 
-        event_filters = []
-        event_params: list[Any] = []
+        # ── Total Events ───────────────────────────────────────────────────────
+        evt_f: list[str] = []
+        evt_p: list[Any] = []
         if date_from:
-            event_filters.append("date(e.startTime) >= date(?)")
-            event_params.append(date_from)
+            evt_f.append("date(e.startTime) >= date(?)"); evt_p.append(date_from)
         if date_to:
-            event_filters.append("date(e.endTime) <= date(?)")
-            event_params.append(date_to)
+            evt_f.append("date(e.endTime) <= date(?)"); evt_p.append(date_to)
         if party_type:
-            event_filters.append("p.partyType = ?")
-            event_params.append(party_type)
-        event_where = f"WHERE {' AND '.join(event_filters)}" if event_filters else ""
+            evt_f.append("p.partyType = ?"); evt_p.append(party_type)
+        if building_id or wing_code:
+            evt_f.append("""
+                EXISTS (
+                    SELECT 1 FROM event_room _er
+                    JOIN room     _rm ON _rm.roomId    = _er.roomId
+                    JOIN floor    _fl ON _fl.floorId   = _rm.floorId
+                    JOIN wing     _w  ON _w.wingId     = _fl.wingId
+                    JOIN building _b  ON _b.buildingId = _w.buildingId
+                    WHERE _er.eventId = e.eventId
+                      AND (? = '' OR _b.buildingId = ?)
+                      AND (? = '' OR _w.wingCode   = ?)
+                )""")
+            evt_p.extend(_rs_params)
+        evt_where = f"WHERE {' AND '.join(evt_f)}" if evt_f else ""
+
         total_events = db.execute(
             f"""
             SELECT COUNT(DISTINCT e.eventId) AS total_events
             FROM event e
             JOIN party p ON p.partyId = e.hostPartyId
-            {event_where}
+            {evt_where}
             """,
-            event_params,
+            evt_p,
         ).fetchone()["total_events"]
 
-        stay_filters = ["s.checkoutTime IS NOT NULL"]
-        stay_params: list[Any] = []
+        # ── Average Stay Duration ──────────────────────────────────────────────
+        stay_f: list[str] = ["s.checkoutTime IS NOT NULL", _room_scope_sql]
+        stay_p: list[Any] = list(_rs_params)
         if date_from:
-            stay_filters.append("date(s.checkinTime) >= date(?)")
-            stay_params.append(date_from)
+            stay_f.append("date(s.checkinTime) >= date(?)"); stay_p.append(date_from)
         if date_to:
-            stay_filters.append("date(s.checkoutTime) <= date(?)")
-            stay_params.append(date_to)
+            stay_f.append("date(s.checkoutTime) <= date(?)"); stay_p.append(date_to)
         if party_type:
-            stay_filters.append("p.partyType = ?")
-            stay_params.append(party_type)
+            stay_f.append("p.partyType = ?"); stay_p.append(party_type)
+
         avg_stay_days = db.execute(
             f"""
             SELECT COALESCE(ROUND(AVG(julianday(s.checkoutTime) - julianday(s.checkinTime)), 2), 0) AS avg_days
             FROM stay s
             JOIN reservation r ON r.reservationId = s.reservationId
-            JOIN party p ON p.partyId = r.partyId
-            WHERE {' AND '.join(stay_filters)}
+            JOIN party p       ON p.partyId       = r.partyId
+            WHERE {' AND '.join(stay_f)}
             """,
-            stay_params,
+            stay_p,
         ).fetchone()["avg_days"]
 
+        # ── Active Assignments ─────────────────────────────────────────────────
         active_assignments = db.execute(
             """
             SELECT COUNT(*) AS cnt
             FROM room_assignment ra
+            JOIN room     rm ON rm.roomId    = ra.roomId
+            JOIN floor    fl ON fl.floorId   = rm.floorId
+            JOIN wing     w  ON w.wingId     = fl.wingId
+            JOIN building b  ON b.buildingId = w.buildingId
+            JOIN reservation r ON r.reservationId = ra.reservationId
+            JOIN party p ON p.partyId = r.partyId
             LEFT JOIN (
                 SELECT reservationId, MAX(stayId) AS latest_stay
-                FROM stay
-                GROUP BY reservationId
+                FROM stay GROUP BY reservationId
             ) ls ON ls.reservationId = ra.reservationId
             LEFT JOIN stay s ON s.stayId = ls.latest_stay
-            WHERE s.checkoutTime IS NULL OR s.stayId IS NULL
-            """
+            WHERE (s.checkoutTime IS NULL OR s.stayId IS NULL)
+              AND (? = '' OR b.buildingId = ?)
+              AND (? = '' OR w.wingCode   = ?)
+              AND (? = '' OR p.partyType  = ?)
+            """,
+            [building_id, building_id, wing_code, wing_code, party_type, party_type],
         ).fetchone()["cnt"]
 
+        # ── Open Maintenance Tickets ───────────────────────────────────────────
         open_tickets = db.execute(
-            "SELECT COUNT(*) AS cnt FROM maintenance_ticket WHERE lower(status) <> 'resolved'"
+            """
+            SELECT COUNT(*) AS cnt
+            FROM maintenance_ticket mt
+            JOIN room     rm ON rm.roomId    = mt.roomId
+            JOIN floor    fl ON fl.floorId   = rm.floorId
+            JOIN wing     w  ON w.wingId     = fl.wingId
+            JOIN building b  ON b.buildingId = w.buildingId
+            WHERE lower(mt.status) <> 'resolved'
+              AND (? = '' OR b.buildingId = ?)
+              AND (? = '' OR w.wingCode   = ?)
+            """,
+            [building_id, building_id, wing_code, wing_code],
         ).fetchone()["cnt"]
 
         occupancy = db.execute(
             """
             SELECT
                 b.buildingName,
-                SUM(CASE WHEN lower(r.currentStatus) = 'occupied' THEN 1 ELSE 0 END) AS occupied,
-                SUM(CASE WHEN lower(r.currentStatus) <> 'occupied' THEN 1 ELSE 0 END) AS available_or_other
+                SUM(CASE WHEN lower(r.currentStatus) = 'occupied'    THEN 1 ELSE 0 END) AS occupied,
+                SUM(CASE WHEN lower(r.currentStatus) = 'available'   THEN 1 ELSE 0 END) AS available,
+                SUM(CASE WHEN lower(r.currentStatus) NOT IN ('occupied','available') THEN 1 ELSE 0 END) AS other
             FROM room r
             JOIN floor f ON f.floorId = r.floorId
             JOIN wing w ON w.wingId = f.wingId
             JOIN building b ON b.buildingId = w.buildingId
-            WHERE (? = '' OR b.buildingId = ?) AND (? = '' OR w.wingId = ?)
+            WHERE (? = '' OR b.buildingId = ?) AND (? = '' OR w.wingCode = ?)
             GROUP BY b.buildingId, b.buildingName
             ORDER BY b.buildingName
             """,
-            (building_id, building_id, wing_id, wing_id),
+            (building_id, building_id, wing_code, wing_code),
         ).fetchall()
 
         buildings = db.execute("SELECT buildingId, buildingName FROM building ORDER BY buildingName").fetchall()
-        wings = db.execute("SELECT wingId, wingCode, buildingId FROM wing ORDER BY wingCode").fetchall()
+
+        # Distinct wing codes, each carrying a JSON list of buildingIds that have it
+        import json as _json
+        wing_rows = db.execute(
+            "SELECT wingCode, GROUP_CONCAT(buildingId) AS bids FROM wing GROUP BY wingCode ORDER BY wingCode"
+        ).fetchall()
+        wings = [
+            {"wingCode": r["wingCode"], "buildingIds": [int(x) for x in r["bids"].split(",")]}
+            for r in wing_rows
+        ]
+        wings_json = _json.dumps(wings)
+
         party_types = db.execute("SELECT DISTINCT partyType FROM party ORDER BY partyType").fetchall()
 
         return render_template(
@@ -221,12 +289,13 @@ def register_routes(app: Flask) -> None:
             occupancy=occupancy,
             buildings=buildings,
             wings=wings,
+            wings_json=wings_json,
             party_types=party_types,
             filters={
                 "date_from": date_from,
                 "date_to": date_to,
                 "building_id": building_id,
-                "wing_id": wing_id,
+                "wing_code": wing_code,
                 "party_type": party_type,
             },
         )
@@ -268,7 +337,7 @@ def register_routes(app: Flask) -> None:
 
         # --- 构建动态 SQL 查询 ---
         query = """
-            SELECT r.roomId, r.roomNumber, r.baseRate, r.maxCapacity, r.currentStatus,
+            SELECT r.roomId, r.roomId AS roomLabel, r.roomNumber, r.baseRate, r.maxCapacity, r.currentStatus,
                 f.floorNumber, f.nonSmokingFloor, w.wingCode, b.buildingName
             FROM room r
             JOIN floor f ON f.floorId = r.floorId
@@ -279,8 +348,8 @@ def register_routes(app: Flask) -> None:
         params = []
 
         if search_room_id:
-            query += " AND r.roomId = ?"
-            params.append(search_room_id)
+            query += " AND r.roomId LIKE ?"
+            params.append(f"%{search_room_id}%")
         if filter_status:
             query += " AND r.currentStatus = ?"
             params.append(filter_status)
@@ -299,12 +368,28 @@ def register_routes(app: Flask) -> None:
 
         # 其他数据展示
         room_functions = db.execute(
-            "SELECT rf.roomId, rf.functionCode, fn.functionName, rf.activeness FROM room_function rf JOIN function fn ON fn.functionCode = rf.functionCode ORDER BY rf.roomId"
+            """
+            SELECT rf.roomId, rf.roomId AS roomLabel, rf.functionCode, fn.functionName, rf.activeness
+            FROM room_function rf
+            JOIN function fn ON fn.functionCode = rf.functionCode
+            ORDER BY rf.roomId
+            """
         ).fetchall()
         room_beds = db.execute(
-            "SELECT rb.roomId, bt.name AS bedType, rb.quantity, rb.isFoldable FROM room_has_bed rb JOIN bed_type bt ON bt.bedTypeId = rb.bedTypeId ORDER BY rb.roomId"
+            """
+            SELECT rb.roomId, rb.roomId AS roomLabel, bt.name AS bedType, rb.quantity, rb.isFoldable
+            FROM room_has_bed rb
+            JOIN bed_type bt ON bt.bedTypeId = rb.bedTypeId
+            ORDER BY rb.roomId
+            """
         ).fetchall()
-        adjacency = db.execute("SELECT roomId1, roomId2, connectionType FROM room_adjacency ORDER BY roomId1").fetchall()
+        adjacency = db.execute(
+            """
+            SELECT roomId1, roomId1 AS roomLabel1, roomId2, roomId2 AS roomLabel2, connectionType
+            FROM room_adjacency
+            ORDER BY roomId1
+            """
+        ).fetchall()
         
         # 供下拉菜单使用的原始数据
         functions_list = db.execute("SELECT functionCode, functionName FROM function ORDER BY functionName").fetchall()
@@ -581,24 +666,27 @@ def register_routes(app: Flask) -> None:
         # 1. 获取需要处理的预订（未退房的 Confirmed/Pending 预订）
         actionable_reservations = db.execute("""
             SELECT r.reservationId, r.startDate, r.endDate, p.contactPersonName,
-                a.assignmentId, rm.roomNumber,
+                a.assignmentId, rm.roomNumber, a.roomId AS roomLabel,
                 s.stayId, s.checkinTime
             FROM reservation r
             JOIN party p ON r.partyId = p.partyId
             LEFT JOIN room_assignment a ON r.reservationId = a.reservationId
             LEFT JOIN room rm ON a.roomId = rm.roomId
             LEFT JOIN stay s ON r.reservationId = s.reservationId
-            WHERE r.status IN ('Confirmed', 'Pending') 
+            WHERE r.status IN ('Confirmed', 'Pending')
             AND s.checkoutTime IS NULL
             ORDER BY r.startDate ASC
         """).fetchall()
 
         # 2. 仅获取 Available 的房间供分配
-        available_rooms = db.execute("SELECT roomId, roomNumber, currentStatus FROM room WHERE currentStatus = 'Available' ORDER BY roomNumber").fetchall()
-        
+        available_rooms = db.execute(
+            "SELECT roomId, roomId AS roomLabel, currentStatus FROM room WHERE currentStatus = 'Available' ORDER BY roomId"
+        ).fetchall()
+
         # 3. 历史分配和入住记录
         assignments_list = db.execute("""
-            SELECT a.assignmentId, a.reservationId, a.assignmentDate, p.contactPersonName, a.roomId, rm.roomNumber, rm.currentStatus
+            SELECT a.assignmentId, a.reservationId, a.assignmentDate, p.contactPersonName,
+                a.roomId, a.roomId AS roomLabel, rm.currentStatus
             FROM room_assignment a
             JOIN reservation r ON a.reservationId = r.reservationId
             JOIN party p ON r.partyId = p.partyId
@@ -686,16 +774,18 @@ def register_routes(app: Flask) -> None:
         ).fetchall()
         event_rooms = db.execute(
             """
-            SELECT er.eventId, er.roomId, r.roomNumber
+            SELECT er.eventId, er.roomId, er.roomId AS roomLabel, r.roomNumber
             FROM event_room er
             JOIN room r ON r.roomId = er.roomId
             ORDER BY er.eventId, er.roomId
             """
         ).fetchall()
         parties_data = db.execute("SELECT partyId, contactPersonName FROM party ORDER BY contactPersonName").fetchall()
-        
+
         # 仅向前端传递 Available 的房间供分配
-        rooms = db.execute("SELECT roomId, roomNumber, currentStatus FROM room WHERE currentStatus = 'Available' ORDER BY roomNumber").fetchall()
+        rooms = db.execute(
+            "SELECT roomId, roomId AS roomLabel, currentStatus FROM room WHERE currentStatus = 'Available' ORDER BY roomId"
+        ).fetchall()
         
         return render_template(
             "events.html",
@@ -767,7 +857,8 @@ def register_routes(app: Flask) -> None:
                 # 1. 自动计算 Room Charges (获取该 Party 所有 Reservation 对应的 Stay)
                 account_stays = db.execute(
                     """
-                    SELECT s.stayId, s.reservationId, s.checkinTime, s.checkoutTime, rm.roomNumber, rm.baseRate,
+                    SELECT s.stayId, s.reservationId, s.checkinTime, s.checkoutTime,
+                           rm.roomNumber, rm.baseRate, ra.roomId AS roomLabel,
                            CAST(MAX(1, CEIL(julianday(COALESCE(s.checkoutTime, datetime('now'))) - julianday(s.checkinTime))) AS INTEGER) AS days
                     FROM stay s
                     JOIN reservation r ON r.reservationId = s.reservationId
@@ -776,10 +867,10 @@ def register_routes(app: Flask) -> None:
                     WHERE r.partyId = ?
                     """, (p_id,)
                 ).fetchall()
-                
+
                 for s in account_stays:
                     cost = s["days"] * s["baseRate"]
-                    room_charges.append({"desc": f"Stay #{s['stayId']} (Room {s['roomNumber']}) - {s['days']} days", "amount": cost})
+                    room_charges.append({"desc": f"Stay #{s['stayId']} ({s['roomLabel']}) - {s['days']} days", "amount": cost})
                     total_due += cost
 
                 # 2. 自动计算 Event Charges
@@ -869,17 +960,15 @@ def register_routes(app: Flask) -> None:
 
         tickets = db.execute(
             """
-            SELECT mt.ticketId, mt.roomId, mt.issueDescription, mt.status, mt.dateCreated, mt.dateResolved,
-                   r.roomNumber, w.wingCode, b.buildingName
+            SELECT mt.ticketId, mt.roomId, mt.roomId AS roomLabel,
+                   mt.issueDescription, mt.status, mt.dateCreated, mt.dateResolved
             FROM maintenance_ticket mt
-            JOIN room r ON r.roomId = mt.roomId
-            JOIN floor f ON f.floorId = r.floorId
-            JOIN wing w ON w.wingId = f.wingId
-            JOIN building b ON b.buildingId = w.buildingId
             ORDER BY mt.dateCreated DESC
             """
         ).fetchall()
-        rooms = db.execute("SELECT roomId, roomNumber, currentStatus FROM room ORDER BY roomNumber").fetchall()
+        rooms = db.execute(
+            "SELECT roomId, roomId AS roomLabel, currentStatus FROM room ORDER BY roomId"
+        ).fetchall()
         return render_template(
             "maintenance.html",
             tickets=tickets,

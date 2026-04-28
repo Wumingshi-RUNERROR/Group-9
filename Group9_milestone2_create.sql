@@ -33,7 +33,7 @@ CREATE TABLE floor (
 );
 
 CREATE TABLE room (
-    roomId INTEGER PRIMARY KEY,
+    roomId TEXT NOT NULL PRIMARY KEY,
     floorId INTEGER NOT NULL,
     roomNumber TEXT NOT NULL,
     baseRate REAL NOT NULL,
@@ -49,7 +49,7 @@ CREATE TABLE function (
 );
 
 CREATE TABLE room_function (
-    roomId INTEGER NOT NULL,
+    roomId TEXT NOT NULL,
     functionCode TEXT NOT NULL,
     activeness TEXT,
     PRIMARY KEY (roomId, functionCode),
@@ -64,7 +64,7 @@ CREATE TABLE bed_type (
 );
 
 CREATE TABLE room_has_bed (
-    roomId INTEGER NOT NULL,
+    roomId TEXT NOT NULL,
     bedTypeId INTEGER NOT NULL,
     quantity INTEGER NOT NULL CHECK (quantity >= 0),
     isFoldable INTEGER NOT NULL CHECK (isFoldable IN (0, 1)),
@@ -74,8 +74,8 @@ CREATE TABLE room_has_bed (
 );
 
 CREATE TABLE room_adjacency (
-    roomId1 INTEGER NOT NULL,
-    roomId2 INTEGER NOT NULL,
+    roomId1 TEXT NOT NULL,
+    roomId2 TEXT NOT NULL,
     connectionType TEXT NOT NULL,
     PRIMARY KEY (roomId1, roomId2),
     FOREIGN KEY (roomId1) REFERENCES room(roomId),
@@ -123,7 +123,7 @@ CREATE TABLE reservation (
 CREATE TABLE room_assignment (
     assignmentId INTEGER PRIMARY KEY,
     reservationId INTEGER NOT NULL,
-    roomId INTEGER NOT NULL,
+    roomId TEXT NOT NULL,
     assignmentDate TEXT NOT NULL,
     FOREIGN KEY (reservationId) REFERENCES reservation(reservationId),
     FOREIGN KEY (roomId) REFERENCES room(roomId)
@@ -152,7 +152,7 @@ CREATE TABLE event (
 
 CREATE TABLE event_room (
     eventId INTEGER NOT NULL,
-    roomId INTEGER NOT NULL,
+    roomId TEXT NOT NULL,
     PRIMARY KEY (eventId, roomId),
     FOREIGN KEY (eventId) REFERENCES event(eventId),
     FOREIGN KEY (roomId) REFERENCES room(roomId)
@@ -178,7 +178,7 @@ CREATE TABLE charge (
 
 CREATE TABLE maintenance_ticket (
     ticketId INTEGER PRIMARY KEY,
-    roomId INTEGER NOT NULL,
+    roomId TEXT NOT NULL,
     issueDescription TEXT NOT NULL,
     status TEXT NOT NULL,
     dateCreated TEXT NOT NULL,

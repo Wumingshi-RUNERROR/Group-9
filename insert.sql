@@ -11,52 +11,73 @@ INSERT OR IGNORE INTO building (buildingId, hotelId, buildingName) VALUES
 (4, 2, 'Lakeside Annex');
 
 INSERT OR IGNORE INTO wing (wingId, buildingId, wingCode, nearPool, nearParking, handicapAccess) VALUES
-(5, 3, 'E', 1, 1, 1),
-(6, 4, 'F', 0, 1, 1);
+(5, 3, 'A', 1, 1, 1),
+(6, 4, 'A', 0, 1, 1),
+(7, 3, 'B', 0, 1, 1),
+(8, 4, 'B', 1, 0, 0);
 
 INSERT OR IGNORE INTO floor (floorId, wingId, floorNumber, nonSmokingFloor) VALUES
-(7, 5, 1, 1),
-(8, 5, 2, 1),
-(9, 6, 1, 0);
+(7, 5, 2, 1),
+(8, 5, 3, 1),
+(9, 6, 1, 0),
+(10, 7, 1, 1),
+(11, 8, 1, 0);
 
 INSERT OR IGNORE INTO room (roomId, floorId, roomNumber, baseRate, maxCapacity, currentStatus) VALUES
-(11, 7, '201', 175.00, 2, 'Available'),
-(12, 7, '202', 185.00, 2, 'Occupied'),
-(13, 8, '301', 265.00, 4, 'Available'),
-(14, 9, '101', 155.00, 2, 'Available'),
-(15, 1, '103', 205.00, 3, 'Available'),
-(16, 4, '202', 295.00, 4, 'Maintenance');
+('MH-A-201', 7, '201', 175.00, 2, 'Available'),
+('MH-A-202', 7, '202', 185.00, 2, 'Occupied'),
+('MH-A-301', 8, '301', 265.00, 4, 'Available'),
+('LA-A-101', 9, '101', 155.00, 2, 'Available'),
+('OT-A-103', 1, '103', 205.00, 3, 'Available'),
+('OT-B-202', 4, '202', 295.00, 4, 'Maintenance'),
+('MH-B-101', 10, '101', 160.00, 2, 'Available'),
+('MH-B-102', 10, '102', 170.00, 3, 'Available'),
+('LA-B-101', 11, '101', 145.00, 2, 'Available'),
+('LA-B-102', 11, '102', 155.00, 2, 'Available');
 
 INSERT OR IGNORE INTO function (functionCode, functionName) VALUES
-('BRK', 'Breakfast Room'),
 ('GYM', 'Fitness Studio');
 
 INSERT OR IGNORE INTO room_function (roomId, functionCode, activeness) VALUES
-(11, 'SLP', 'Active'),
-(12, 'SLP', 'Active'),
-(13, 'STE', 'Active'),
-(13, 'SLP', 'Active'),
-(14, 'SLP', 'Active'),
-(15, 'SLP', 'Active'),
-(16, 'SLP', 'Inactive');
+('MH-A-201', 'SLP', 'Active'),
+('MH-A-202', 'SLP', 'Active'),
+('MH-A-301', 'STE', 'Active'),
+('MH-A-301', 'SLP', 'Active'),
+('LA-A-101', 'SLP', 'Active'),
+('OT-A-103', 'SLP', 'Active'),
+('OT-B-202', 'SLP', 'Inactive'),
+('MH-B-101', 'SLP', 'Active'),
+('MH-B-102', 'GYM', 'Active'),
+('LA-B-101', 'GYM', 'Active'),
+('LA-B-102', 'SLP', 'Active');
+
+INSERT OR IGNORE INTO room_function (roomId, functionCode, activeness) VALUES
+('OT-B-101', 'GYM', 'Active'),
+('GL-B-101', 'GYM', 'Active');
 
 INSERT OR IGNORE INTO bed_type (bedTypeId, name, capacity) VALUES
 (5, 'California King', 2),
 (6, 'Bunk Bed', 1);
 
 INSERT OR IGNORE INTO room_has_bed (roomId, bedTypeId, quantity, isFoldable) VALUES
-(11, 1, 1, 0),
-(12, 3, 2, 0),
-(13, 2, 1, 0),
-(13, 4, 1, 1),
-(14, 1, 2, 0),
-(15, 2, 1, 0),
-(16, 5, 1, 0);
+('MH-A-201', 1, 1, 0),
+('MH-A-202', 3, 2, 0),
+('MH-A-301', 2, 1, 0),
+('MH-A-301', 4, 1, 1),
+('LA-A-101', 1, 2, 0),
+('OT-A-103', 2, 1, 0),
+('OT-B-202', 5, 1, 0),
+('MH-B-101', 1, 1, 0),
+('MH-B-102', 1, 2, 0),
+('LA-B-101', 2, 1, 0),
+('LA-B-102', 1, 1, 0);
 
 INSERT OR IGNORE INTO room_adjacency (roomId1, roomId2, connectionType) VALUES
-(11, 12, 'Connecting Door'),
-(13, 14, 'Adjacent'),
-(3, 16, 'Staff Corridor');
+('MH-A-201', 'MH-A-202', 'Connecting Door'),
+('MH-A-301', 'LA-A-101', 'Adjacent'),
+('OT-A-201', 'OT-B-202', 'Staff Corridor'),
+('MH-B-101', 'MH-B-102', 'Connecting Door'),
+('LA-B-101', 'LA-B-102', 'Adjacent');
 
 INSERT OR IGNORE INTO party (partyId, email, phone, partyType, contactPersonName) VALUES
 (7, 'grace@travel.org', '555-4001', 'Organization', 'Grace Patel'),
@@ -87,12 +108,12 @@ INSERT OR IGNORE INTO reservation (reservationId, partyId, dateCreated, startDat
 (13, 1, '2026-04-12', '2026-05-10', '2026-05-12', 'Confirmed', 0, 0.00);
 
 INSERT OR IGNORE INTO room_assignment (assignmentId, reservationId, roomId, assignmentDate) VALUES
-(11, 9, 11, '2026-04-09'),
-(12, 9, 12, '2026-04-09'),
-(13, 10, 14, '2026-04-14'),
-(14, 11, 13, '2026-04-18'),
-(15, 12, 15, '2026-04-30'),
-(16, 13, 1, '2026-05-09');
+(11, 9, 'MH-A-201', '2026-04-09'),
+(12, 9, 'MH-A-202', '2026-04-09'),
+(13, 10, 'LA-A-101', '2026-04-14'),
+(14, 11, 'MH-A-301', '2026-04-18'),
+(15, 12, 'OT-A-103', '2026-04-30'),
+(16, 13, 'OT-A-101', '2026-05-09');
 
 INSERT OR IGNORE INTO stay (stayId, reservationId, checkinTime, checkoutTime) VALUES
 (9, 9, '2026-04-10 15:00:00', '2026-04-12 11:00:00'),
@@ -106,9 +127,9 @@ INSERT OR IGNORE INTO event (eventId, hostPartyId, eventType, startTime, endTime
 (6, 9, 'Product Launch', '2026-04-21 10:00:00', '2026-04-21 16:00:00', 60, 'Morning');
 
 INSERT OR IGNORE INTO event_room (eventId, roomId) VALUES
-(5, 11),
-(5, 12),
-(6, 13);
+(5, 'MH-A-201'),
+(5, 'MH-A-202'),
+(6, 'MH-A-301');
 
 INSERT OR IGNORE INTO service_type (serviceCode, serviceType, baseRate) VALUES
 (7, 'Parking', 18.00),
@@ -126,6 +147,6 @@ INSERT OR IGNORE INTO charge (chargeId, accountId, stayId, serviceCode, chargeAm
 (31, 1, 13, 5, 40.00, '2026-05-11');
 
 INSERT OR IGNORE INTO maintenance_ticket (ticketId, roomId, issueDescription, status, dateCreated, dateResolved) VALUES
-(6, 11, 'Window seal draft', 'Open', '2026-04-08', NULL),
-(7, 14, 'Smoke detector battery', 'Resolved', '2026-04-03', '2026-04-04'),
-(8, 16, 'HVAC noise (follow-up)', 'Open', '2026-04-20', NULL);
+(6, 'MH-A-201', 'Window seal draft', 'Open', '2026-04-08', NULL),
+(7, 'LA-A-101', 'Smoke detector battery', 'Resolved', '2026-04-03', '2026-04-04'),
+(8, 'OT-B-202', 'HVAC noise (follow-up)', 'Open', '2026-04-20', NULL);

@@ -41,7 +41,7 @@
                 <select name="roomId" required>
                     <option value="" disabled selected>-- Available Rooms Only --</option>
                     {% for r in rooms %}
-                        <option value="{{ r.roomId }}">Room {{ r.roomNumber }}</option>
+                        <option value="{{ r.roomId }}">{{ r.roomLabel }}</option>
                     {% endfor %}
                 </select>
             </label>
@@ -73,7 +73,7 @@
                     {% set ns = namespace(found=false) %}
                     {% for er in event_rooms %}
                         {% if er.eventId == e.eventId %}
-                            <span style="color: #10b981; font-weight: bold;">Room {{ er.roomNumber }}</span>
+                            <span style="color: #10b981; font-weight: bold;">{{ er.roomLabel }}</span>
                             {% set ns.found = true %}
                         {% endif %}
                     {% endfor %}

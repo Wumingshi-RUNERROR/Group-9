@@ -7,7 +7,7 @@
     <label>Date From <input type="date" name="date_from" value="{{ filters.date_from }}"></label>
     <label>Date To <input type="date" name="date_to" value="{{ filters.date_to }}"></label>
     <label>Building
-        <select name="building_id">
+        <select name="building_id" id="sel-building">
             <option value="">All</option>
             {% for b in buildings %}
                 <option value="{{ b.buildingId }}" {% if filters.building_id == b.buildingId|string %}selected{% endif %}>{{ b.buildingName }}</option>
@@ -15,10 +15,11 @@
         </select>
     </label>
     <label>Wing
-        <select name="wing_id">
+        <select name="wing_code" id="sel-wing">
             <option value="">All</option>
             {% for w in wings %}
-                <option value="{{ w.wingId }}" {% if filters.wing_id == w.wingId|string %}selected{% endif %}>{{ w.wingCode }}</option>
+                <option value="{{ w.wingCode }}"
+                        {% if filters.wing_code == w.wingCode %}selected{% endif %}>Wing {{ w.wingCode }}</option>
             {% endfor %}
         </select>
     </label>
@@ -42,18 +43,60 @@
 </section>
 
 <section class="card">
-    <h3>Occupied vs Available/Other by Building</h3>
+    <h3>Room Status by Building</h3>
     <table>
-        <thead><tr><th>Building</th><th>Occupied</th><th>Available/Other</th></tr></thead>
+        <thead>
+            <tr>
+                <th>Building</th>
+                <th style="color:#16a34a;">Available</th>
+                <th style="color:#dc2626;">Occupied</th>
+                <th style="color:#d97706;">Other</th>
+            </tr>
+        </thead>
         <tbody>
         {% for row in occupancy %}
             <tr>
                 <td>{{ row.buildingName }}</td>
+                <td>{{ row.available }}</td>
                 <td>{{ row.occupied }}</td>
-                <td>{{ row.available_or_other }}</td>
+                <td>{{ row.other }}</td>
             </tr>
         {% endfor %}
         </tbody>
     </table>
 </section>
+
+<script>
+(function () {
+    // wings data: [{wingCode, buildingIds: [...]}, ...]
+    const WINGS = {{ wings_json | safe }};
+    const wingBuildingMap = {};
+    WINGS.forEach(w => { wingBuildingMap[w.wingCode] = w.buildingIds; });
+
+    const selBuilding = document.getElementById('sel-building');
+    const selWing     = document.getElementById('sel-wing');
+    const allWingOpts = Array.from(selWing.querySelectorAll('option[value]:not([value=""])'));
+
+    function filterWings() {
+        const bid = selBuilding.value === '' ? null : parseInt(selBuilding.value);
+        let activeSelected = false;
+
+        allWingOpts.forEach(opt => {
+            const bids  = wingBuildingMap[opt.value] || [];
+            const match = bid === null || bids.includes(bid);
+            opt.hidden   = !match;
+            opt.disabled = !match;
+            if (!match && opt.selected) opt.selected = false;
+            if (match && opt.selected) activeSelected = true;
+        });
+
+        if (!activeSelected) {
+            selWing.querySelector('option[value=""]').selected = true;
+        }
+    }
+
+    selBuilding.addEventListener('change', filterWings);
+    filterWings();
+})();
+</script>
 {% endblock %}

@@ -7,7 +7,7 @@
     <h3>Search & Filter Rooms</h3>
     <form method="get" class="grid-form" style="grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));">
         <label>Room ID
-            <input type="number" name="search_room_id" value="{{ filters.search_room_id }}" placeholder="Exact ID">
+            <input type="text" name="search_room_id" value="{{ filters.search_room_id }}" placeholder="e.g. GL-A or OT-B-101">
         </label>
         
         <label>Status
@@ -53,18 +53,16 @@
     <table>
         <thead>
         <tr>
-            <th>Room ID</th><th>Building</th><th>Wing</th><th>Floor</th><th>Room #</th>
-            <th>Rate</th><th>Capacity</th><th>Status</th><th>Non-Smoking</th>
+            <th>Room</th><th>Building</th><th>Wing</th><th>Floor</th><th>Rate</th><th>Capacity</th><th>Status</th><th>Non-Smoking</th>
         </tr>
         </thead>
         <tbody>
         {% for room in rooms %}
             <tr>
-                <td>{{ room.roomId }}</td>
+                <td><strong>{{ room.roomLabel }}</strong></td>
                 <td>{{ room.buildingName }}</td>
                 <td>{{ room.wingCode }}</td>
                 <td>{{ room.floorNumber }}</td>
-                <td><strong>{{ room.roomNumber }}</strong></td>
                 <td>${{ "%.2f"|format(room.baseRate) }}</td>
                 <td>{{ room.maxCapacity }}</td>
                 <td>
@@ -89,7 +87,7 @@
             <label>Select Room
                 <select name="roomId" required>
                     {% for room in rooms %}
-                        <option value="{{ room.roomId }}">ID {{ room.roomId }} - #{{ room.roomNumber }}</option>
+                        <option value="{{ room.roomId }}">{{ room.roomLabel }}</option>
                     {% endfor %}
                 </select>
             </label>
@@ -113,7 +111,7 @@
             <label>Select Room
                 <select name="roomId" required>
                     {% for room in rooms %}
-                        <option value="{{ room.roomId }}">ID {{ room.roomId }} - #{{ room.roomNumber }}</option>
+                        <option value="{{ room.roomId }}">{{ room.roomLabel }}</option>
                     {% endfor %}
                 </select>
             </label>
@@ -138,7 +136,7 @@
             <label>Select Room
                 <select name="roomId" required>
                     {% for room in rooms %}
-                        <option value="{{ room.roomId }}">ID {{ room.roomId }} - #{{ room.roomNumber }}</option>
+                        <option value="{{ room.roomId }}">{{ room.roomLabel }}</option>
                     {% endfor %}
                 </select>
             </label>
@@ -166,10 +164,10 @@
     <section class="card">
         <h3>Current Room Functions</h3>
         <table>
-            <thead><tr><th>Room ID</th><th>Code</th><th>Name</th><th>Status</th></tr></thead>
+            <thead><tr><th>Room</th><th>Code</th><th>Name</th><th>Status</th></tr></thead>
             <tbody>
             {% for rf in room_functions %}
-                <tr><td>{{ rf.roomId }}</td><td>{{ rf.functionCode }}</td><td>{{ rf.functionName }}</td><td>{{ rf.activeness }}</td></tr>
+                <tr><td>{{ rf.roomLabel }}</td><td>{{ rf.functionCode }}</td><td>{{ rf.functionName }}</td><td>{{ rf.activeness }}</td></tr>
             {% endfor %}
             </tbody>
         </table>
@@ -178,10 +176,10 @@
     <section class="card">
         <h3>Current Bed Configurations</h3>
         <table>
-            <thead><tr><th>Room ID</th><th>Type</th><th>Qty</th><th>Foldable</th></tr></thead>
+            <thead><tr><th>Room</th><th>Type</th><th>Qty</th><th>Foldable</th></tr></thead>
             <tbody>
             {% for rb in room_beds %}
-                <tr><td>{{ rb.roomId }}</td><td>{{ rb.bedType }}</td><td>{{ rb.quantity }}</td><td>{{ "Yes" if rb.isFoldable else "No" }}</td></tr>
+                <tr><td>{{ rb.roomLabel }}</td><td>{{ rb.bedType }}</td><td>{{ rb.quantity }}</td><td>{{ "Yes" if rb.isFoldable else "No" }}</td></tr>
             {% endfor %}
             </tbody>
         </table>
@@ -191,10 +189,10 @@
 <section class="card">
     <h3>Existing Room Adjacency</h3>
     <table>
-        <thead><tr><th>Room 1 (ID)</th><th>Room 2 (ID)</th><th>Connection Type</th></tr></thead>
+        <thead><tr><th>Room 1</th><th>Room 2</th><th>Connection Type</th></tr></thead>
         <tbody>
         {% for link in adjacency %}
-            <tr><td>{{ link.roomId1 }}</td><td>{{ link.roomId2 }}</td><td>{{ link.connectionType }}</td></tr>
+            <tr><td>{{ link.roomLabel1 }}</td><td>{{ link.roomLabel2 }}</td><td>{{ link.connectionType }}</td></tr>
         {% else %}
             <tr><td colspan="3" style="text-align: center;">No adjacency data recorded.</td></tr>
         {% endfor %}

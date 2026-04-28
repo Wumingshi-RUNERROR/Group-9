@@ -101,7 +101,7 @@
                     <select name="stayId">
                         <option value="">-- None --</option>
                         {% for s in account_stays %}
-                            <option value="{{ s.stayId }}">Stay #{{ s.stayId }} (Room {{ s.roomNumber }})</option>
+                            <option value="{{ s.stayId }}">Stay #{{ s.stayId }} ({{ s.roomLabel }})</option>
                         {% endfor %}
                     </select>
                 </label>

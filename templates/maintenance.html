@@ -11,7 +11,7 @@
             <label>Room
                 <select name="roomId" required>
                     {% for r in rooms %}
-                        <option value="{{ r.roomId }}">{{ r.roomId }} - {{ r.roomNumber }} ({{ r.currentStatus }})</option>
+                        <option value="{{ r.roomId }}">{{ r.roomLabel }} ({{ r.currentStatus }})</option>
                     {% endfor %}
                 </select>
             </label>
@@ -35,7 +35,7 @@
             <label>Ticket ID
                 <select name="ticketId">
                     {% for t in tickets %}
-                        <option value="{{ t.ticketId }}">#{{ t.ticketId }} - Room {{ t.roomNumber }} ({{ t.status }})</option>
+                        <option value="{{ t.ticketId }}">#{{ t.ticketId }} - {{ t.roomLabel }} ({{ t.status }})</option>
                     {% endfor %}
                 </select>
             </label>
@@ -48,11 +48,11 @@
 <section class="card">
     <h3>Ticket List</h3>
     <table>
-        <thead><tr><th>ID</th><th>Building</th><th>Wing</th><th>Room</th><th>Issue</th><th>Status</th><th>Created</th><th>Resolved</th></tr></thead>
+        <thead><tr><th>ID</th><th>Room</th><th>Issue</th><th>Status</th><th>Created</th><th>Resolved</th></tr></thead>
         <tbody>
         {% for t in tickets %}
             <tr>
-                <td>{{ t.ticketId }}</td><td>{{ t.buildingName }}</td><td>{{ t.wingCode }}</td><td>{{ t.roomNumber }}</td>
+                <td>{{ t.ticketId }}</td><td>{{ t.roomLabel }}</td>
                 <td>{{ t.issueDescription }}</td><td>{{ t.status }}</td><td>{{ t.dateCreated }}</td><td>{{ t.dateResolved or "-" }}</td>
             </tr>
         {% endfor %}

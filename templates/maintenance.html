@@ -16,31 +16,32 @@
                 </select>
             </label>
             <label>Issue Description <input name="issueDescription" required></label>
-            <label>Status
-                <select name="status">
-                    <option>Open</option>
-                    <option>In Progress</option>
-                    <option>Resolved</option>
-                </select>
-            </label>
+            <p class="maintenance-default-status">New tickets start as <strong>Open</strong>.</p>
             <label>Date Created <input type="date" name="dateCreated" value="{{ today }}" required></label>
             <button class="btn" type="submit">Create Ticket</button>
         </form>
     </section>
 
     <section class="card">
-        <h3>Resolve Ticket</h3>
+        <h3>Update Ticket Status</h3>
         <form method="post" class="grid-form">
-            <input type="hidden" name="action" value="resolve_ticket">
+            <input type="hidden" name="action" value="update_ticket_status">
             <label>Ticket ID
-                <select name="ticketId">
-                    {% for t in tickets %}
+                <select name="ticketId" required>
+                    {% for t in unresolved_tickets %}
                         <option value="{{ t.ticketId }}">#{{ t.ticketId }} - {{ t.roomLabel }} ({{ t.status }})</option>
                     {% endfor %}
                 </select>
             </label>
-            <label>Date Resolved <input type="date" name="dateResolved" value="{{ today }}" required></label>
-            <button class="btn" type="submit">Resolve</button>
+            <label>New Status
+                <select name="status" required>
+                    <option>Open</option>
+                    <option>In Progress</option>
+                    <option>Resolved</option>
+                </select>
+            </label>
+            <label>Date Resolved <input type="date" name="dateResolved" value="{{ today }}"></label>
+            <button class="btn" type="submit">Update Status</button>
         </form>
     </section>
 </div>
@@ -53,7 +54,9 @@
         {% for t in tickets %}
             <tr>
                 <td>{{ t.ticketId }}</td><td>{{ t.roomLabel }}</td>
-                <td>{{ t.issueDescription }}</td><td>{{ t.status }}</td><td>{{ t.dateCreated }}</td><td>{{ t.dateResolved or "-" }}</td>
+                <td>{{ t.issueDescription }}</td>
+                <td><span class="maintenance-status maintenance-status--{{ t.status|lower|replace(' ', '-') }}">{{ t.status }}</span></td>
+                <td>{{ t.dateCreated }}</td><td>{{ t.dateResolved or "-" }}</td>
             </tr>
         {% endfor %}
         </tbody>

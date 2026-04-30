@@ -66,28 +66,28 @@
     {% if step == 'party' %}
     <section class="card">
         <h3>Step 1: Select or Create Party</h3>
-        <div class="split">
-            <div class="sub-card">
+        <div class="reservation-party-grid">
+            <div class="sub-card reservation-party-panel">
                 <h4>Search Existing Party</h4>
-                <form method="get">
+                <form method="get" class="reservation-search-form">
                     <input type="hidden" name="view" value="create">
                     <input type="hidden" name="step" value="party">
                     <input name="q" value="{{ filters.q }}" placeholder="Name/Email/Phone...">
-                    <button type="submit">Search</button>
+                    <button class="btn" type="submit">Search</button>
                 </form>
-                <div style="margin-top:10px; max-height:300px; overflow-y:auto;">
-                    <table style="font-size: 0.9em;">
+                <div class="reservation-party-results">
+                    <table>
                         {% for p in parties %}
                         <tr>
                             <td>{{ p.contactPersonName }}</td>
-                            <td><a href="{{ url_for('reservations', view='create', step='reservation', current_party_id=p.partyId) }}" class="btn">Select</a></td>
+                            <td><a href="{{ url_for('reservations', view='create', step='reservation', current_party_id=p.partyId) }}" class="btn party-select-btn">Select</a></td>
                         </tr>
                         {% endfor %}
                     </table>
                 </div>
             </div>
 
-            <div class="sub-card" style="border-left: 1px solid #eee; padding-left: 20px;">
+            <div class="sub-card reservation-party-panel">
                 <h4>Create New Party</h4>
                 <form method="post" class="grid-form">
                     <input type="hidden" name="action" value="create_party">

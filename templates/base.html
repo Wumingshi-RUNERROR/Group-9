@@ -6,10 +6,16 @@
     <title>{% block title %}Last Resort Admin{% endblock %}</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
 </head>
-<body>
+<body class="page-{{ request.endpoint or 'home' }}">
 <div class="app-shell">
     <aside class="sidebar">
-        <h1>Last Resort</h1>
+        <div class="brand">
+            <span class="brand-mark" aria-hidden="true">LR</span>
+            <div>
+                <h1>Last Resort</h1>
+                <p>Luxury Hotel Operations</p>
+            </div>
+        </div>
         <nav>
             {% set ep = request.endpoint %}
             <a href="{{ url_for('dashboard') }}"{% if ep == 'dashboard' %} class="active"{% endif %}>Dashboard</a>

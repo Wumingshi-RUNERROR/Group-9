@@ -31,7 +31,10 @@
             {% endfor %}
         </select>
     </label>
-    <button type="submit" class="btn">Apply</button>
+    <div class="dashboard-filter-actions">
+        <button type="submit" class="btn">Apply</button>
+        <a href="{{ url_for('dashboard') }}" class="btn btn-secondary">Clear</a>
+    </div>
 </form>
 
 <section class="kpi-grid">
@@ -48,9 +51,9 @@
         <thead>
             <tr>
                 <th>Building</th>
-                <th style="color:#16a34a;">Available</th>
-                <th style="color:#dc2626;">Occupied</th>
-                <th style="color:#d97706;">Other</th>
+                <th class="metric-available">Available</th>
+                <th class="metric-occupied">Occupied</th>
+                <th class="metric-maintenance">Maintenance</th>
             </tr>
         </thead>
         <tbody>
@@ -59,7 +62,7 @@
                 <td>{{ row.buildingName }}</td>
                 <td>{{ row.available }}</td>
                 <td>{{ row.occupied }}</td>
-                <td>{{ row.other }}</td>
+                <td>{{ row.maintenance }}</td>
             </tr>
         {% endfor %}
         </tbody>

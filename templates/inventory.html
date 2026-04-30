@@ -3,9 +3,9 @@
 {% block content %}
 <h2>Inventory Management</h2>
 
-<section class="card" style="background-color: #f8fafc; border: 1px solid #e2e8f0;">
+<section class="card inventory-filter-card">
     <h3>Search & Filter Rooms</h3>
-    <form method="get" class="grid-form" style="grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));">
+    <form method="get" class="inventory-filter-form">
         <label>Room ID
             <input type="text" name="search_room_id" value="{{ filters.search_room_id }}" placeholder="e.g. GL-A or OT-B-101">
         </label>
@@ -38,12 +38,12 @@
         </label>
 
         <label>Max Base Rate ($)
-            <input type="number" step="0.01" name="filter_max_rate" value="{{ filters.filter_max_rate }}" placeholder="Up to...">
+            <input type="number" step="10" min="0" name="filter_max_rate" value="{{ filters.filter_max_rate }}" placeholder="Up to...">
         </label>
 
-        <div style="display: flex; gap: 10px; align-items: flex-end;">
-            <button class="btn" type="submit" style="flex: 1;">Filter</button>
-            <a href="{{ url_for('inventory') }}" class="btn btn-secondary" style="flex: 1; text-align: center; line-height: 2.2;">Clear</a>
+        <div class="inventory-filter-actions">
+            <button class="btn" type="submit">Apply</button>
+            <a href="{{ url_for('inventory') }}" class="btn btn-secondary">Clear</a>
         </div>
     </form>
 </section>
@@ -66,7 +66,7 @@
                 <td>${{ "%.2f"|format(room.baseRate) }}</td>
                 <td>{{ room.maxCapacity }}</td>
                 <td>
-                    <span class="status-tag {{ room.currentStatus|lower }}">
+                    <span class="room-status room-status--{{ room.currentStatus|lower }}">
                         {{ room.currentStatus }}
                     </span>
                 </td>
@@ -79,8 +79,8 @@
     </table>
 </section>
 
-<div class="split">
-    <section class="card">
+<div class="inventory-actions-grid">
+    <section class="card inventory-action-card">
         <h3>Update Room Basics</h3>
         <form method="post" class="grid-form">
             <input type="hidden" name="action" value="update_room">
@@ -104,7 +104,7 @@
         </form>
     </section>
 
-    <section class="card">
+    <section class="card inventory-action-card">
         <h3>Add Room Function</h3>
         <form method="post" class="grid-form">
             <input type="hidden" name="action" value="add_room_function">
@@ -126,10 +126,8 @@
             <button class="btn" type="submit">Add Function</button>
         </form>
     </section>
-</div>
 
-<div class="split">
-    <section class="card">
+    <section class="card inventory-action-card">
         <h3>Add Bed Configuration</h3>
         <form method="post" class="grid-form">
             <input type="hidden" name="action" value="add_room_bed">
@@ -148,15 +146,11 @@
                 </select>
             </label>
             <label>Quantity <input type="number" name="quantity" value="1" min="1" required></label>
-            <label style="margin-top: 10px; display: block;">
+            <label class="inventory-checkbox-row">
                 <input type="checkbox" name="isFoldable" value="1"> Foldable Bed
             </label>
             <button class="btn" type="submit">Add Bed Setup</button>
         </form>
-    </section>
-
-    <section class="card" style="border: 1px dashed #cbd5e1; display: flex; align-items: center; justify-content: center; opacity: 0.6;">
-        <p style="color: #64748b; font-style: italic;">Room Adjacency editing is disabled. See existing connections below.</p>
     </section>
 </div>
 

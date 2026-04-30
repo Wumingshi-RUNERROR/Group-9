@@ -3,8 +3,8 @@
 {% block content %}
 <h2>Event Management</h2>
 
-<div class="split">
-    <section class="card">
+<div class="split events-workspace">
+    <section class="card event-panel">
         <h3>Create Event</h3>
         <form method="post" class="grid-form">
             <input type="hidden" name="action" value="create_event">
@@ -15,18 +15,24 @@
                     {% endfor %}
                 </select>
             </label>
-            <label>Event Type <input name="eventType" placeholder="Conference" required></label>
+            <label>Event Type
+                <input name="eventType" list="event-type-options" placeholder="Choose existing or type new..." required>
+                <datalist id="event-type-options">
+                    {% for et in event_types %}
+                        <option value="{{ et.eventType }}"></option>
+                    {% endfor %}
+                </datalist>
+            </label>
             
             <label>Start Time <input type="datetime-local" name="startTime" required></label>
             <label>End Time <input type="datetime-local" name="endTime" required></label>
             
             <label>Estimated Guests <input name="estimatedGuestCount" type="number" min="0"></label>
-            <label>Usage Time <input name="usageTime" placeholder="Morning / Evening"></label>
             <button class="btn" type="submit">Create Event</button>
         </form>
     </section>
 
-    <section class="card" style="border-top: 4px solid #f59e0b;">
+    <section class="card event-panel">
         <h3>Assign / Re-assign Room</h3>
         <form method="post" class="grid-form">
             <input type="hidden" name="action" value="add_event_room">
@@ -45,8 +51,8 @@
                     {% endfor %}
                 </select>
             </label>
-            <button class="btn" type="submit" style="background-color: #f59e0b;">Assign / Update Room</button>
-            <small style="color: #666; margin-top: 5px;">* Note: An event can only have one room. Re-assigning will overwrite the current room.</small>
+            <button class="btn" type="submit">Assign / Update Room</button>
+            <small class="event-note">An event can only have one room. Re-assigning will overwrite the current room.</small>
         </form>
     </section>
 </div>
@@ -56,7 +62,7 @@
     <table>
         <thead>
             <tr>
-                <th>ID</th><th>Type</th><th>Host</th><th>Start</th><th>End</th><th>Guests</th><th>Usage Time</th><th>Assigned Room</th>
+                <th>ID</th><th>Type</th><th>Host</th><th>Start</th><th>End</th><th>Guests</th><th>Assigned Room</th>
             </tr>
         </thead>
         <tbody>
@@ -68,17 +74,16 @@
                 <td>{{ e.startTime|replace('T', ' ') }}</td>
                 <td>{{ e.endTime|replace('T', ' ') }}</td>
                 <td>{{ e.estimatedGuestCount or "-" }}</td>
-                <td>{{ e.usageTime or "-" }}</td>
                 <td>
                     {% set ns = namespace(found=false) %}
                     {% for er in event_rooms %}
                         {% if er.eventId == e.eventId %}
-                            <span style="color: #10b981; font-weight: bold;">{{ er.roomLabel }}</span>
+                            <span class="event-room-assigned">{{ er.roomLabel }}</span>
                             {% set ns.found = true %}
                         {% endif %}
                     {% endfor %}
                     {% if not ns.found %}
-                        <span style="color: #ef4444; font-size: 0.9em;">Not Assigned</span>
+                        <span class="event-room-empty">Not Assigned</span>
                     {% endif %}
                 </td>
             </tr>

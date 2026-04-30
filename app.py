@@ -90,6 +90,37 @@ def parse_bool_flag(value: str | None) -> int:
     return 1 if value in {"1", "on", "true", "True"} else 0
 
 
+def sync_maintenance_room_status(db: sqlite3.Connection, room_id: str | None = None) -> None:
+    if room_id:
+        db.execute(
+            """
+            UPDATE room
+            SET currentStatus = 'Maintenance'
+            WHERE roomId = ?
+              AND EXISTS (
+                  SELECT 1
+                  FROM maintenance_ticket mt
+                  WHERE mt.roomId = room.roomId
+                    AND LOWER(mt.status) <> 'resolved'
+              )
+            """,
+            (room_id,),
+        )
+    else:
+        db.execute(
+            """
+            UPDATE room
+            SET currentStatus = 'Maintenance'
+            WHERE EXISTS (
+                SELECT 1
+                FROM maintenance_ticket mt
+                WHERE mt.roomId = room.roomId
+                  AND LOWER(mt.status) <> 'resolved'
+            )
+            """
+        )
+
+
 def register_routes(app: Flask) -> None:
     app.teardown_appcontext(close_db)
 
@@ -107,6 +138,8 @@ def register_routes(app: Flask) -> None:
     @app.route("/dashboard")
     def dashboard():
         db = get_db()
+        sync_maintenance_room_status(db)
+        db.commit()
         date_from   = request.args.get("date_from",   "")
         date_to     = request.args.get("date_to",     "")
         building_id = request.args.get("building_id", "")
@@ -252,7 +285,7 @@ def register_routes(app: Flask) -> None:
                 b.buildingName,
                 SUM(CASE WHEN lower(r.currentStatus) = 'occupied'    THEN 1 ELSE 0 END) AS occupied,
                 SUM(CASE WHEN lower(r.currentStatus) = 'available'   THEN 1 ELSE 0 END) AS available,
-                SUM(CASE WHEN lower(r.currentStatus) NOT IN ('occupied','available') THEN 1 ELSE 0 END) AS other
+                SUM(CASE WHEN lower(r.currentStatus) = 'maintenance' THEN 1 ELSE 0 END) AS maintenance
             FROM room r
             JOIN floor f ON f.floorId = r.floorId
             JOIN wing w ON w.wingId = f.wingId
@@ -311,6 +344,7 @@ def register_routes(app: Flask) -> None:
                         "UPDATE room SET baseRate = ?, maxCapacity = ?, currentStatus = ? WHERE roomId = ?",
                         (request.form["baseRate"], request.form["maxCapacity"], request.form["currentStatus"], request.form["roomId"]),
                     )
+                    sync_maintenance_room_status(db, request.form["roomId"])
                 elif action == "add_room_function":
                     db.execute(
                         "INSERT INTO room_function (roomId, functionCode, activeness) VALUES (?, ?, ?)",
@@ -329,6 +363,9 @@ def register_routes(app: Flask) -> None:
             return redirect(url_for("inventory"))
 
         # --- 获取筛选参数 (GET) ---
+        sync_maintenance_room_status(db)
+        db.commit()
+
         search_room_id = request.args.get("search_room_id", "").strip()
         filter_status = request.args.get("filter_status", "").strip()
         filter_function = request.args.get("filter_function", "").strip()
@@ -354,8 +391,9 @@ def register_routes(app: Flask) -> None:
             query += " AND r.currentStatus = ?"
             params.append(filter_status)
         if filter_max_rate:
+            max_rate = max(0.0, float(filter_max_rate))
             query += " AND r.baseRate <= ?"
-            params.append(float(filter_max_rate))
+            params.append(max_rate)
         if filter_function:
             query += " AND EXISTS (SELECT 1 FROM room_function rf WHERE rf.roomId = r.roomId AND rf.functionCode = ?)"
             params.append(filter_function)
@@ -726,8 +764,8 @@ def register_routes(app: Flask) -> None:
                     event_id = rowmax(db, "event", "eventId")
                     db.execute(
                         """
-                        INSERT INTO event (eventId, hostPartyId, eventType, startTime, endTime, estimatedGuestCount, usageTime)
-                        VALUES (?, ?, ?, ?, ?, ?, ?)
+                        INSERT INTO event (eventId, hostPartyId, eventType, startTime, endTime, estimatedGuestCount)
+                        VALUES (?, ?, ?, ?, ?, ?)
                         """,
                         (
                             event_id,
@@ -736,7 +774,6 @@ def register_routes(app: Flask) -> None:
                             request.form["startTime"],
                             request.form["endTime"],
                             request.form.get("estimatedGuestCount") or None,
-                            request.form.get("usageTime") or None,
                         ),
                     )
                 elif action == "add_event_room":
@@ -781,6 +818,9 @@ def register_routes(app: Flask) -> None:
             """
         ).fetchall()
         parties_data = db.execute("SELECT partyId, contactPersonName FROM party ORDER BY contactPersonName").fetchall()
+        event_types = db.execute(
+            "SELECT DISTINCT eventType FROM event ORDER BY eventType"
+        ).fetchall()
 
         # 仅向前端传递 Available 的房间供分配
         rooms = db.execute(
@@ -792,6 +832,7 @@ def register_routes(app: Flask) -> None:
             events=event_rows,
             event_rooms=event_rooms,
             parties=parties_data,
+            event_types=event_types,
             rooms=rooms,
         )
 
@@ -857,14 +898,28 @@ def register_routes(app: Flask) -> None:
                 # 1. 自动计算 Room Charges (获取该 Party 所有 Reservation 对应的 Stay)
                 account_stays = db.execute(
                     """
-                    SELECT s.stayId, s.reservationId, s.checkinTime, s.checkoutTime,
-                           rm.roomNumber, rm.baseRate, ra.roomId AS roomLabel,
-                           CAST(MAX(1, CEIL(julianday(COALESCE(s.checkoutTime, datetime('now'))) - julianday(s.checkinTime))) AS INTEGER) AS days
-                    FROM stay s
-                    JOIN reservation r ON r.reservationId = s.reservationId
-                    JOIN room_assignment ra ON ra.reservationId = r.reservationId
-                    JOIN room rm ON rm.roomId = ra.roomId
-                    WHERE r.partyId = ?
+                    SELECT stayId, reservationId, checkinTime, checkoutTime,
+                           roomNumber, baseRate, roomLabel,
+                           CAST(
+                               MAX(
+                                   1,
+                                   CAST(stay_days AS INTEGER)
+                                   + CASE
+                                       WHEN stay_days > CAST(stay_days AS INTEGER) THEN 1
+                                       ELSE 0
+                                     END
+                               ) AS INTEGER
+                           ) AS days
+                    FROM (
+                        SELECT s.stayId, s.reservationId, s.checkinTime, s.checkoutTime,
+                               rm.roomNumber, rm.baseRate, ra.roomId AS roomLabel,
+                               julianday(COALESCE(s.checkoutTime, datetime('now'))) - julianday(s.checkinTime) AS stay_days
+                        FROM stay s
+                        JOIN reservation r ON r.reservationId = s.reservationId
+                        JOIN room_assignment ra ON ra.reservationId = r.reservationId
+                        JOIN room rm ON rm.roomId = ra.roomId
+                        WHERE r.partyId = ?
+                    )
                     """, (p_id,)
                 ).fetchall()
 
@@ -915,6 +970,7 @@ def register_routes(app: Flask) -> None:
             try:
                 if action == "create_ticket":
                     ticket_id = rowmax(db, "maintenance_ticket", "ticketId")
+                    status = "Open"
                     db.execute(
                         """
                         INSERT INTO maintenance_ticket (ticketId, roomId, issueDescription, status, dateCreated, dateResolved)
@@ -924,39 +980,60 @@ def register_routes(app: Flask) -> None:
                             ticket_id,
                             request.form["roomId"],
                             request.form["issueDescription"],
-                            request.form["status"],
+                            status,
                             request.form["dateCreated"],
                         ),
                     )
-                    if request.form["status"].lower() == "open":
-                        db.execute(
-                            "UPDATE room SET currentStatus = 'Maintenance' WHERE roomId = ?",
-                            (request.form["roomId"],),
-                        )
-                elif action == "resolve_ticket":
+                    db.execute(
+                        "UPDATE room SET currentStatus = 'Maintenance' WHERE roomId = ?",
+                        (request.form["roomId"],),
+                    )
+                elif action == "update_ticket_status":
                     ticket_id = request.form["ticketId"]
-                    resolved_on = request.form["dateResolved"]
+                    status = request.form["status"]
+                    if status not in {"Open", "In Progress", "Resolved"}:
+                        raise ValueError("Invalid maintenance status.")
+                    resolved_on = request.form.get("dateResolved") if status == "Resolved" else None
                     db.execute(
                         """
                         UPDATE maintenance_ticket
-                        SET status = 'Resolved', dateResolved = ?
-                        WHERE ticketId = ?
+                        SET status = ?, dateResolved = ?
+                        WHERE ticketId = ? AND LOWER(status) <> 'resolved'
                         """,
-                        (resolved_on, ticket_id),
+                        (status, resolved_on, ticket_id),
                     )
                     ticket = db.execute(
                         "SELECT roomId FROM maintenance_ticket WHERE ticketId = ?", (ticket_id,)
                     ).fetchone()
                     if ticket:
-                        db.execute(
-                            "UPDATE room SET currentStatus = 'Available' WHERE roomId = ?",
-                            (ticket["roomId"],),
-                        )
+                        if status == "Resolved":
+                            open_room_tickets = db.execute(
+                                """
+                                SELECT COUNT(*) AS cnt
+                                FROM maintenance_ticket
+                                WHERE roomId = ? AND LOWER(status) <> 'resolved'
+                                """,
+                                (ticket["roomId"],),
+                            ).fetchone()["cnt"]
+                            if open_room_tickets == 0:
+                                db.execute(
+                                    "UPDATE room SET currentStatus = 'Available' WHERE roomId = ?",
+                                    (ticket["roomId"],),
+                                )
+                        else:
+                            db.execute(
+                                "UPDATE room SET currentStatus = 'Maintenance' WHERE roomId = ?",
+                                (ticket["roomId"],),
+                            )
+                sync_maintenance_room_status(db)
                 db.commit()
                 flash("Maintenance action completed.", "success")
-            except sqlite3.IntegrityError as exc:
+            except (sqlite3.IntegrityError, ValueError) as exc:
                 flash(f"Maintenance action failed: {exc}", "error")
             return redirect(url_for("maintenance"))
+
+        sync_maintenance_room_status(db)
+        db.commit()
 
         tickets = db.execute(
             """
@@ -966,12 +1043,22 @@ def register_routes(app: Flask) -> None:
             ORDER BY mt.dateCreated DESC
             """
         ).fetchall()
+        unresolved_tickets = db.execute(
+            """
+            SELECT mt.ticketId, mt.roomId, mt.roomId AS roomLabel,
+                   mt.issueDescription, mt.status, mt.dateCreated, mt.dateResolved
+            FROM maintenance_ticket mt
+            WHERE LOWER(mt.status) <> 'resolved'
+            ORDER BY mt.dateCreated DESC
+            """
+        ).fetchall()
         rooms = db.execute(
             "SELECT roomId, roomId AS roomLabel, currentStatus FROM room ORDER BY roomId"
         ).fetchall()
         return render_template(
             "maintenance.html",
             tickets=tickets,
+            unresolved_tickets=unresolved_tickets,
             rooms=rooms,
             today=datetime.now().strftime("%Y-%m-%d"),
         )

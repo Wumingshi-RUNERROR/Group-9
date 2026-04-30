@@ -33,6 +33,3 @@ Flask + Jinja implementation based on `Group9_milestone2_create.sql` and `Group9
 On first run, the app creates `last_resort.db` from:
 - `Group9_milestone2_create.sql`
 - `Group9_milestone2_insert.sql`
-
-You can re-seed from sidebar:
-- `Init DB (safe)` or `Reset + Seed DB`
